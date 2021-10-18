@@ -6,39 +6,31 @@
 class Interface:
     
     # Init Interface
-    def __init__(self, actions):
+    def __init__(self, misc, actions):
+        # Set Misc Reference
+        self.misc = misc
         # Interface Actions Object
-        self.actions = actions
+        self.__actions__ = actions
         # Set Connection Status Object
         self.__conn__ = None
-    
-    @property
-    def bot(self): return bot
-    
-    # Interface
-    def req(self, req, ignore=False):
-        # Check Parameters
-        if not (self.__conn__ or ignore): return False
-        try: # Try Request
-            r = self.bot.misc.requests.post(
-                'http://127.0.0.1:1615/bot',
-                auth=('bot', self.actions.__route__.__password__),
-                json=req,
-            )
-        # Handle Error
-        except: return False
-        # Return Response
-        return r
-    
+        
+    # Set User
+    def user(self, user):
+        return self.__actions__.user(user)
+
+    # Set Pasword
+    def password(self, password):
+        return self.__actions__.password(password)
+
     @property
     def conn(self):
         try: # Try Block
-            r = self.req(None, True)
-            if r == False: raise Exception('Request Failed')
+            r = self.wapp.req(None)
+            if r == False: raise Exception('HTTP request to Target failed')
             else: r.raise_for_status()
-        except self.bot.misc.requests.exceptions.ConnectionError: return False
-        except self.bot.misc.requests.exceptions.HTTPError: return False
-        except self.bot.misc.requests.exceptions.Timeout: return False
+        except self.misc.requests.exceptions.ConnectionError: return False
+        except self.misc.requests.exceptions.HTTPError: return False
+        except self.misc.requests.exceptions.Timeout: return False
         except: return False
         return True
     
@@ -51,21 +43,28 @@ class Interface:
             l1 = 'Connection with Node Established'
             l2 = 'No Connection with Node'
             log = l1 if conn else l2
-            self.bot.log(log)
+            self.misc.log(log)
         # Return Connection Status
         return self.__conn__
     
     # Add Action
     def add(self, name, log=True):
-        return self.actions.add(name, log)
+        return self.__actions__.add(name, log)
     
     # Start Interface App
-    def start(self):
+    def start(self, wapp):
+        # Set Default Value
+        data = None
+        # Assign Wapp
+        self.wapp = wapp
         # Check Link Cyclically
-        self.bot.misc.schedule.each.one.second.do(self.__link__)
+        self.misc.schedule.each.one.second.do(self.__link__)
         try: # Get Bot Phone Number
-            req = self.req(dict(action='host_device'), True)
+            req = self.wapp.req({ 'action':'host_device' })
             data = req.json()['data']
-            self.bot.id = data['wid']['user']
-        except: return False
-        return True
+        except: return None
+        return data
+    
+##########################################################################################################################
+#                                                         INTERFACE                                                      #
+##########################################################################################################################

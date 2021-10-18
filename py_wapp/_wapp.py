@@ -7,9 +7,9 @@
 class Message:
 
     # Init Message
-    def __init__(self, whapp, obj=None):
+    def __init__(self, wapp, obj=None):
         # Assign Whatsapp Object
-        self.whapp = whapp
+        self.wapp = wapp
         # Fix msg
         if type(obj) != dict:
             self.raw_data = {
@@ -29,7 +29,7 @@ class Message:
         self.__reply__ = (lambda: None)
 
     @property
-    def misc(self): return self.whapp.misc
+    def misc(self): return self.wapp.misc
     @property
     def id(self): return self.raw_data['id']
     @property
@@ -51,12 +51,12 @@ class Message:
     def reply(self, function):
         if type(self.id) != str: return function
         self.__reply__ = self.misc.call.safe(function)
-        self.msg.reply.add(self.id, self.__reply__)
+        self.wapp.reply.add(self.id, self.__reply__)
         return self.__reply__
 
     # Quote Message
     def quote(self, msg, log='api::quote_msg'):
-        return self.msg.send(self.author, msg, log, self.id)
+        return self.wapp.send(self.author, msg, log, self.id)
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -66,16 +66,15 @@ class Message:
 class Reply:
 
     # Init Reply
-    def __init__(self, whapp):
+    def __init__(self, wapp):
         # Assign Whatsapp Object
-        self.whapp = whapp
+        self.wapp = wapp
         # Set Replyables
         self.__replyables__ = dict()
-        # Add Action
-        self.interf.add('on_reply')(self.__execute__)
 
     @property
-    def misc(self): return self.whapp.misc
+    def misc(self):
+        return self.wapp.misc
 
     # Add Reply
     def add(self, msg_id, function):
@@ -100,7 +99,7 @@ class Reply:
         reply = req['reply']
         msg_id = req['msg_id']
         # Construct Reply
-        reply = self.whapp.sent(reply)
+        reply = self.wapp.sent(reply)
         # Execute Function
         data = self.__replyables__[msg_id](reply)
         # Return Data
@@ -111,21 +110,19 @@ class Reply:
 ##########################################################################################################################
 
 # Whatsapp Class
-class Whapp:
+class Wapp:
 
     # Init Message
     def __init__(self, misc, target, referer):
-        # Set Reply
-        self.__reply__ = Reply(self)
-        # Constructor of Sent Messages
-        self.__sent__ = self.bot.misc.construct(Sent)
         # Assign Miscellanous Object
         self.misc = misc
+        # Set Reply Object
+        self.__reply__ = Reply(self)
         # Default target Object
         self.__settarget__(target)
         self.__settarget__(referer, True)
 
-    # Set Whapp Target
+    # Set wapp Target
     def __settarget__(self, target, isref=False):
         # Default target Object
         tar = dict(addr = None,
@@ -151,7 +148,21 @@ class Whapp:
         else: self.__referer__ = _assign(self.__referer__)
         # return Done
         return True
-
+    
+    # Interface
+    def req(self, json, tar=None):
+        # Set Default Target
+        if tar == None: tar = self.__target__
+        try: # Try Request
+            r = self.misc.requests.post(
+                url = tar['addr'],
+                auth = (tar['auth']['user'], tar['auth']['password']),
+                json = json,
+            )
+        # Handle Error
+        except: return False
+        # Return Response
+        return r
 
     # Send Message
     def send(self, to, text, log='api::send_msg', quote_id=None, target=None, referer=None):
@@ -165,18 +176,14 @@ class Whapp:
         tar = target if target != None else self.__target__
         ref = referer if referer != None else self.__referer__ 
         # Interface Send Message
-        sent = self.misc.requests.post(
-            url = tar['addr'],
-            auth = (tar['auth']['user'], tar['auth']['password'])
-            json = dict(
-                action='send_msg',
-                to = to,
-                text = text,
-                log = log,
-                quote_id = quote_id,
-                referer = ref
-            )
-        )
+        sent = self.req(dict(
+            action = 'send_msg',
+            to = to,
+            text = text,
+            log = log,
+            quote_id = quote_id,
+            referer = ref
+        ))
         # On Interface Error
         if sent == False: return False
         # Convert to Json
@@ -185,10 +192,10 @@ class Whapp:
         if 'done' not in sent: return False
         if not sent['done']: return False
         # Construct Message
-        sent = self.__sent__(self, sent['data'])
+        sent = Message(self, sent['data'])
         # Logging
         log = 'api::send_msg' if type(log) != str else log
-        self.bot.log('Sent({}) To({})'.format(log, to))
+        self.misc.log('Sent({}) To({})'.format(log, to))
         # Return Sent
         return sent
 

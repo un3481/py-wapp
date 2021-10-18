@@ -1,102 +1,110 @@
+
 ##########################################################################################################################
-#                                                      AVBOT CORE                                                        #
+#                                                       PY-AVBOT                                                         #
+##########################################################################################################################
+#                                                                                                                        #
+#                                                 Whatsapp Bot for AVB                                                   #
+#                                          Multi-language API for Whatsapp Bot                                           #
+#                             ---------------- Python3 -- NodeJS -- MySQL ----------------                               #
+#                                                * Under Development *                                                   #
+#                                     https://github.com/anthony-freitas/ts-avbot                                        #
+#                                                                                                                        #
+##########################################################################################################################
+#                                                      MAIN CODE                                                         #
+##########################################################################################################################
+
+# Import Miscellaneous
+import py_misc as misc
+
+# Import Local Modules
+from ._wapp import Wapp
+from ._chat import Chat
+from ._actions import Actions
+from ._interf import Interface
+
+##########################################################################################################################
+#                                                         BOT CLASS                                                      #
 ##########################################################################################################################
 
 # Bot Class
 class Bot:
 
     # Init Bot
-    def __init__(self, misc):
+    def __init__(self, target):
+        
+        # Set Misc Reference
         self.misc = misc
-        # Allow Info
-        bot = self.bot
-        # Bot Phone Number
-        self.id = ''
-
-        ##########################################################################################################################
-        #                                                           SQL                                                          #
-        ##########################################################################################################################
-
-        # SQL Class
-        class SQL:
-
-            # Init SQL
-            def __init__(self):
-                # Set Connection Status Object
-                self.__conn__ = None
-
-            # Set SQL Connection
-            def sqlconn(self, mysqlconn):
-                # Set MySQL Objects
-                self.mysql = mysqlconn
-                self.user = self.mysql.kwargs['user']
-                self.password = self.mysql.kwargs['password']
-                # Set Logs SQL Connection
-                self.bot.misc.log.sqlconn(self.mysql)
-
-            @property
-            def bot(self):
-                return bot
-
-            # Check MySQL Link
-            def __link__(self):
-                try: # Try Connection
-                    conn = self.mysql.conn
-                    if self.__conn__ != conn:
-                        self.__conn__ = conn
-                        l1 = 'Connection with MySQL Established'
-                        l2 = 'No Connection with MySQL'
-                        log = l1 if conn else l2
-                        self.bot.log(log)
-                    return self.__conn__
-                except: return False
-
-            # Start MySQL Connection
-            def start(self):
-                # Check Link Cyclically
-                self.bot.misc.schedule.each.one.second.do(self.__link__)
-
-        ##########################################################################################################################
-        #                                                      NEST OBJECTS                                                      #
-        ##########################################################################################################################
-
+        
+        # Bot Info
+        self.target = self.wapp.__target__
+        self.me = None
+        
         # Set Bot Api
-        self.api = self.misc.API(log=False).host('0.0.0.0').port(1516)
+        self.api = self.misc.API(log=False).host('0.0.0.0')
 
         # Set Bot Actions
-        self.actions = Actions('/bot/', self.api)
-        self.actions.user('bot').password('vet89u43t0jw234erwedf21sd9R78fe2n2084u')
-
+        self.actions = Actions(self.misc, '/bot/', self.api)
+        
         # Set Bot Interface Actions
-        iactions = Actions('/ibot/', self.api)
-        iactions.user('bot').password('ert2tyt3tQ3423rubu99ibasid8hya8da76sd')
-        self.interf = Interface(iactions)
+        self.i = Interface(
+            Actions(self.misc, '/i/', self.api)
+        )
 
         # Set Bot SQL Object
-        self.sql = SQL()
-
-        # Set Global Objects
-        self.whapp = Whapp()
-        self.chat = Chat()
-
+        self.sql = SQL(self.misc)
+        
+        # Set Bot Chat Object
+        self.chat = Chat(self.misc)
+        
+        # Set Bot Wapp Object
+        self.wapp = Wapp(self.misc)
+        
+        # Add On-Reply Action
+        self.i.add('on_reply')(
+            self.wapp.__reply__.__execute__
+        )
+        
         # Add Action Send
         @self.add('send_msg')
         def __send__(req):
-            r = dict(to=None, text=None, log=None, id=None)
-            if 'to' in req: r['to'] = req['to']
-            if 'text' in req: r['text'] = req['text']
-            if 'log' in req: r['log'] = req['log']
-            if 'quote_id' in req: r['id'] = req['quote_id']
-            sent = self.bot.send(r['to'], r['text'], r['log'], r['id'])
-            return sent
-
+            return self.bot.send(
+                req['to'] if 'to' in req else None,
+                req['text'] if 'text' in req else None,
+                req['log'] if 'log' in req else None,
+                req['quote_id'] if 'quote_id' in req else None
+            )
+    
     ##########################################################################################################################
     #                                                       BOT METHODS                                                      #
     ##########################################################################################################################
 
     @property
-    def bot(self):
+    def bot(self): return self
+    
+    # Keep Alive
+    def keepalive(self):
+        self.misc.keepalive()
+    
+    # Logging
+    def log(self, log):
+        return self.misc.log(log)
+    
+    # MySQL Connection
+    def sqlconn(self, mysqlconn):
+        self.sql.sqlconn(mysqlconn)
+        
+    # Set Port
+    def port(self, port):
+        self.api.port(port)
         return self
+    
+    # Set User
+    def user(self, user):
+        return self.actions.user(user)
+
+    # Set Pasword
+    def password(self, password):
+        return self.actions.password(password)
 
     # Add Action
     def add(self, name, log=True):
@@ -106,38 +114,28 @@ class Bot:
     def check(self, req, param, clas=None):
         return self.actions.check(req, param, clas)
 
-    # Logging
-    def log(self, log):
-        return self.misc.log(log)
-
-    # MySQL Connection
-    def sqlconn(self, mysqlconn):
-        self.sql.sqlconn(mysqlconn)
+    # Send Message
+    def send(self, *args, **kwargs):
+        return self.wapp.send(*args, **kwargs)
 
     # Start API App
     def start(self):
         # Start MySQL Connection
-        self.bot.sql.start()
-        self.bot.misc.time.sleep(0.1)
+        self.sql.start()
         # Start Bot Server
-        s = self.bot.api.start()
-        if not s: raise Exception('Server Not Started')
-        self.bot.misc.time.sleep(0.1)
+        if not self.api.start():
+            raise Exception('Flask server not started')
         # Start Interface Service
-        i = self.bot.interf.start()
-        if not i: raise Exception('Interface Not Started')
-        self.bot.misc.time.sleep(0.1)
+        me = self.i.start(self.wapp)
+        if me == None:
+            raise Exception('Bot Interface not started')
+        # Update Bot Info
+        self.me = me
+        self.chat.__replace__.update({
+            self.me['wid']['user'] : ''
+        })
         # Log Finished
-        self.bot.log('Avbot::Started')
-
-    # Keep Alive
-    def keepalive(self):
-        self.misc.keepalive()
-
-    # Send Message
-    def send(self, *args, **kwargs):
-        return self.whapp.send(*args, **kwargs)
-
+        self.misc.log('avbot::started')
 
 ##########################################################################################################################
 #                                                         END                                                            #

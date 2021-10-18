@@ -4,29 +4,42 @@
 
         # Chat Class
         class Chat:
-            @property
-            def bot(self): return bot
+
+            # Init Chat Class
+            def __init__(self, misc):
+                # Set Misc Reference
+                self.misc = misc
+                # Set To-Replace Dictionary
+                self.__replace__ = {
+                    '  ': ' '
+                }
 
             # Clean Message
             def clean(self, message, lower=True):
+                # Select Actual Text
                 if isinstance(message, Message):
-                    strin = self.bot.misc.copy.deepcopy(message.body)
+                    strin = self.misc.copy.deepcopy(message.body)
                 elif isinstance(message, str):
-                    strin = self.bot.misc.copy.deepcopy(message)
+                    strin = self.misc.copy.deepcopy(message)
                 else: return False
+                # Turn to Lower-Case
                 strin = strin.lower() if lower else strin
-                strin = strin.replace(self.bot.id, '')
-                while '  ' in strin:
-                    strin = strin.replace('  ', ' ')
+                # Replace All Strings in Clear Dict
+                replace = self.__replace__
+                for s in replace:
+                    while s in strin:
+                        strin = strin.replace(s, replace[s])
+                # Remove Trailing Spaces
                 strin = strin.strip()
-                strin = self.bot.misc.unidecode.unidecode(strin)
+                # Encode UTF-8
+                strin = self.misc.unidecode.unidecode(strin)
                 return strin
 
             # Check for Affirmative
             def yes(self, message=None):
                 affirm = ['sim', 'positivo', 'correto', 'certo', 'isso']
                 if message == None:
-                    return self.bot.misc.random.choice(affirm)
+                    return self.misc.random.choice(affirm)
                 else:
                     return self.clean(message) in affirm
 
@@ -34,7 +47,7 @@
             def no(self, message=None):
                 neg = ['nao', 'negativo', 'errado']
                 if message == None:
-                    return self.bot.misc.random.choice(neg)
+                    return self.misc.random.choice(neg)
                 else: return self.clean(message) in neg
 
             # Get Timedelta as String
@@ -51,10 +64,11 @@
 
             @property
             def error(self):
+                # Error Object
                 class Error:
-                    @property
-                    def bot(self):
-                        return bot
+                    # Init Chat Errors
+                    def __init__(self, misc):
+                        self.misc = misc
 
                     @property
                     def understand(self):
@@ -63,6 +77,6 @@
                             'Sinceramente não entendi o que você falou.',
                             'Não fui capaz de interpretar o que você disse.',
                         ]
-                        return self.bot.misc.random.choice(p)
-
-                return Error()
+                        return self.misc.random.choice(p)
+                # Return Object
+                return Error(self.misc)
