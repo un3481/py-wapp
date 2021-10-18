@@ -35,9 +35,24 @@ class Bot:
         # Set Misc Reference
         self.misc = misc
         
-        # Bot Info
-        self.target = self.wapp.__target__
-        self.me = None
+        ##########################################################################################################################
+
+        # Set Bot SQL Object
+        self.sql = SQL(self.misc)
+        
+        # Set Bot Chat Object
+        self.chat = Chat(self.misc)
+        
+        # Set Bot Wapp Object
+        self.wapp = Wapp(self.misc)
+        
+        ##########################################################################################################################
+        
+        # Set Bot Info
+        self.wapp.__settarget__(target)
+        self.hd = None
+        
+        ##########################################################################################################################
         
         # Set Bot Api
         self.api = self.misc.API(log=False).host('0.0.0.0')
@@ -49,15 +64,8 @@ class Bot:
         self.i = Interface(
             Actions(self.misc, '/i/', self.api)
         )
-
-        # Set Bot SQL Object
-        self.sql = SQL(self.misc)
         
-        # Set Bot Chat Object
-        self.chat = Chat(self.misc)
-        
-        # Set Bot Wapp Object
-        self.wapp = Wapp(self.misc)
+        ##########################################################################################################################
         
         # Add On-Reply Action
         self.i.add('on_reply')(
@@ -81,6 +89,8 @@ class Bot:
     @property
     def bot(self): return self
     
+    ##########################################################################################################################
+    
     # Keep Alive
     def keepalive(self):
         self.misc.keepalive()
@@ -92,6 +102,8 @@ class Bot:
     # MySQL Connection
     def sqlconn(self, mysqlconn):
         self.sql.sqlconn(mysqlconn)
+        
+    ##########################################################################################################################
         
     # Set Port
     def port(self, port):
@@ -105,6 +117,13 @@ class Bot:
     # Set Pasword
     def password(self, password):
         return self.actions.password(password)
+    
+    ##########################################################################################################################
+    
+    def target(self):
+        return self.wapp.__target__
+    
+    ##########################################################################################################################
 
     # Add Action
     def add(self, name, log=True):
@@ -117,6 +136,8 @@ class Bot:
     # Send Message
     def send(self, *args, **kwargs):
         return self.wapp.send(*args, **kwargs)
+    
+    ##########################################################################################################################
 
     # Start API App
     def start(self):
@@ -126,16 +147,18 @@ class Bot:
         if not self.api.start():
             raise Exception('Flask server not started')
         # Start Interface Service
-        me = self.i.start(self.wapp)
-        if me == None:
+        hd = self.i.start(self.wapp)
+        if hd == None:
             raise Exception('Bot Interface not started')
         # Update Bot Info
-        self.me = me
+        self.hd = hd
         self.chat.__replace__.update({
-            self.me['wid']['user'] : ''
+            self.hd['wid']['user'] : ''
         })
         # Log Finished
-        self.misc.log('avbot::started')
+        self.misc.log(
+            self.hd['name'] + '::started'
+        )
 
 ##########################################################################################################################
 #                                                         END                                                            #
