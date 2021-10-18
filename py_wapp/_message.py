@@ -87,7 +87,7 @@ class Reply:
         try: del self.__replyables__[msg_id]
         except: self.__replyables__[msg_id] = None
         # Add to Dictionary
-        self.__replyables__[msg_id] = self.misc.call.safe(function)
+        self.__replyables__[msg_id] = self.misc.call.Safe(function)
         return True
 
     # On Reply
@@ -101,7 +101,7 @@ class Reply:
         reply = req['reply']
         msg_id = req['msg_id']
         # Construct Reply
-        reply = self.wapp.sent(reply)
+        reply = Message(reply)
         # Execute Function
         data = self.__replyables__[msg_id](reply)
         # Return Data
