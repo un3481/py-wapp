@@ -113,7 +113,7 @@ class Reply:
 class Wapp:
 
     # Init Message
-    def __init__(self, misc, target, referer):
+    def __init__(self, misc, target, referer=None):
         # Assign Miscellanous Object
         self.misc = misc
         # Set Reply Object
