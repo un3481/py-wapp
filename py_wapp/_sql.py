@@ -1,4 +1,6 @@
 
+import py_misc
+
 ##########################################################################################################################
 #                                                            SQL                                                         #
 ##########################################################################################################################
@@ -7,14 +9,14 @@
 class SQL:
 
     # Init SQL
-    def __init__(self, misc):
+    def __init__(self, misc: py_misc):
         # Set Misc Reference
         self.misc = misc
         # Set Connection Status Object
         self.__conn__ = None
     
     # Set SQL Connection
-    def sqlconn(self, mysqlconn):
+    def sqlconn(self, mysqlconn: py_misc.MySQL):
         # Set MySQL Objects
         self.mysql = mysqlconn
         self.user = self.mysql.kwargs['user']

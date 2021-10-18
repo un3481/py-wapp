@@ -18,6 +18,7 @@ import py_misc as misc
 
 # Import Local Modules
 from ._wapp import Wapp
+from ._sql import SQL
 from ._chat import Chat
 from ._actions import Actions
 from ._interf import Interface

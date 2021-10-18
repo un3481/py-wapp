@@ -1,3 +1,8 @@
+
+import py_misc
+from ._actions import Actions
+from ._wapp import Wapp
+
 ##########################################################################################################################
 #                                                         INTERFACE                                                      #
 ##########################################################################################################################
@@ -6,7 +11,7 @@
 class Interface:
     
     # Init Interface
-    def __init__(self, misc, actions):
+    def __init__(self, misc: py_misc, actions: Actions):
         # Set Misc Reference
         self.misc = misc
         # Interface Actions Object
@@ -52,7 +57,7 @@ class Interface:
         return self.__actions__.add(name, log)
     
     # Start Interface App
-    def start(self, wapp):
+    def start(self, wapp: Wapp):
         # Set Default Value
         data = None
         # Assign Wapp
