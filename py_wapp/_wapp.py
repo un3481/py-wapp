@@ -169,7 +169,7 @@ class Wapp:
         self.Reply = Reply
         
         # Set Reply Object
-        self.__reply__ = self.Reply(self)
+        self.__reply__ = self.Reply()
 
     ##########################################################################################################################
     #                                                          ACTIONS                                                       #
