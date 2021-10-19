@@ -18,6 +18,10 @@ class Wapp:
     ):
         # Assign Miscellanous Object
         self.misc = misc
+        # Set Default Target
+        self.__target__ = dict(addr = None,
+            auth = dict(user = None, password = None)
+        )
         # Default target Object
         self.__settarget__(target)
         self.__settarget__(referer, True)
