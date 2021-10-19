@@ -94,8 +94,6 @@ class Wapp:
                 self.on = MessageTrigger(self.wapp)
 
             @property
-            def wapp(self): return wapp
-            @property
             def misc(self): return self.wapp.misc
 
             @property
@@ -140,8 +138,6 @@ class Wapp:
                     Callable[[Message], Any]
                 ] = dict()
 
-            @property
-            def wapp(self): return wapp
             @property
             def misc(self): return self.wapp.misc
 
