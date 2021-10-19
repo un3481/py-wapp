@@ -282,7 +282,7 @@ class Wapp:
         if 'done' not in sent: return None
         if not sent['done']: return None
         # Construct Message
-        sent = self.Message(self, sent['data'])
+        sent = self.Message(sent['data'])
         # Logging
         log = 'api::send_msg' if type(log) != str else log
         self.misc.log('Sent({}) To({})'.format(log, to))
