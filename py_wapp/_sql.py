@@ -41,6 +41,8 @@ class SQL:
     def start(self):
         # Check Link Cyclically
         self.misc.schedule.each.one.second.do(self.__link__)
+        # Return Done
+        return True
             
 ##########################################################################################################################
 #                                                            SQL                                                         #
