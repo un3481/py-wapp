@@ -275,7 +275,7 @@ class Wapp:
         # On Interface Error
         if sent == None: return None
         # Convert to Json
-        else: sent = sent.json()
+        else: sent = self.misc.json.loads(sent.text)
         # Fix Errors
         if 'done' not in sent: return None
         if not sent['done']: return None
