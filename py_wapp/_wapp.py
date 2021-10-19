@@ -60,6 +60,9 @@ class Wapp:
                 self.__reply__ = self.misc.call.Safe(function)
                 self.wapp.__reply__.add(self.id, self.__reply__)
                 return self.__reply__
+        
+        # Nest Classes
+        self.MessageTrigger = MessageTrigger
 
         ##########################################################################################################################
         #                                                          ACTIONS                                                       #
@@ -73,8 +76,6 @@ class Wapp:
                 self,
                 obj: dict[str, Any] = None
             ):
-                # Assign Whatsapp Object
-                self.wapp = wapp
                 # Fix msg
                 if type(obj) != dict:
                     self.raw_data = {
@@ -91,8 +92,10 @@ class Wapp:
                     self.quoted = self.__class__(q)
                 except: q = None
                 # Set Message-Trigger
-                self.on = MessageTrigger(self.wapp)
+                self.on = self.wapp.MessageTrigger()
 
+            @property
+            def wapp(self): return wapp
             @property
             def misc(self): return self.wapp.misc
 
@@ -139,6 +142,8 @@ class Wapp:
                 ] = dict()
 
             @property
+            def wapp(self): return wapp
+            @property
             def misc(self): return self.wapp.misc
 
             # Add Reply
@@ -168,7 +173,7 @@ class Wapp:
                 reply = req['reply']
                 msg_id = req['msg_id']
                 # Construct Reply
-                reply = Message(reply)
+                reply = self.wapp.Message(reply)
                 # Execute Function
                 data = self.__replyables__[msg_id](reply)
                 # Return Data
