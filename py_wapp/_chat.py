@@ -1,6 +1,29 @@
 
-import py_misc
-from ._wapp import Message
+from ._wapp import Wapp
+
+##########################################################################################################################
+#                                                   ERROR MESSAGE CLASS                                                  #
+##########################################################################################################################
+
+
+# Error Object
+class ErrorMessages:
+    # Init Chat Errors
+    def __init__(self, wapp: Wapp):
+        self.wapp = wapp
+    
+    @property
+    def misc(self):
+        return self.wapp.misc
+    
+    @property
+    def understand(self):
+        p = [
+            'Desculpe, não entendi o que você quis dizer.',
+            'Sinceramente não entendi o que você falou.',
+            'Não fui capaz de interpretar o que você disse.',
+        ]
+        return self.misc.random.choice(p)
 
 ##########################################################################################################################
 #                                                      CHAT CLASS                                                        #
@@ -10,18 +33,24 @@ from ._wapp import Message
 class Chat:
     
     # Init Chat Class
-    def __init__(self, misc: py_misc):
+    def __init__(self, wapp: Wapp):
         # Set Misc Reference
-        self.misc = misc
+        self.wapp = wapp
+        # Nest Object
+        self.error = ErrorMessages(self.wapp)
         # Set To-Replace Dictionary
         self.__replace__ = {
             '  ': ' '
         }
     
+    @property
+    def misc(self):
+        return self.wapp.misc
+    
     # Clean Message
     def clean(self, message, lower=True):
         # Select Actual Text
-        if isinstance(message, Message):
+        if isinstance(message, self.wapp.Message):
             strin = self.misc.copy.deepcopy(message.body)
         elif isinstance(message, str):
             strin = self.misc.copy.deepcopy(message)
@@ -65,21 +94,3 @@ class Chat:
         delta += '{} minuto'.format(m) if m != 0 else ''
         delta += 's' if m > 1 else ''
         return delta
-
-    @property
-    def error(self):
-        # Error Object
-        class Error:
-            # Init Chat Errors
-            def __init__(self, misc: py_misc):
-                self.misc = misc
-            @property
-            def understand(self):
-                p = [
-                    'Desculpe, não entendi o que você quis dizer.',
-                    'Sinceramente não entendi o que você falou.',
-                    'Não fui capaz de interpretar o que você disse.',
-                ]
-                return self.misc.random.choice(p)
-        # Return Object
-        return Error(self.misc)
