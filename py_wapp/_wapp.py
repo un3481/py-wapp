@@ -272,6 +272,7 @@ class Wapp:
             quote_id = quote_id,
             referer = ref
         ), tar)
+        print(sent.text)
         # On Interface Error
         if sent == None: return None
         # Convert to Json
