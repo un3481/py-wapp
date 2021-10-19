@@ -272,11 +272,12 @@ class Wapp:
             quote_id = quote_id,
             referer = ref
         ), tar)
-        print(sent.text)
         # On Interface Error
         if sent == None: return None
+        # Check Status Code
+        if sent.status_code != 200: return None
         # Convert to Json
-        else: sent = self.misc.json.loads(sent.text)
+        sent = self.misc.json.loads(sent.text)
         # Fix Errors
         if 'done' not in sent: return None
         if not sent['done']: return None
