@@ -6,6 +6,16 @@ from typing import Any, Callable
 #                                                          ACTIONS                                                       #
 ##########################################################################################################################
 
+# Get Default Target Object
+def default_target() -> dict[str, str | dict[str, str]]:
+    return dict(addr = None,
+        auth = dict(user = None, password = None)
+    )
+
+##########################################################################################################################
+#                                                          ACTIONS                                                       #
+##########################################################################################################################
+
 # Whatsapp Class
 class Wapp:
 
@@ -19,12 +29,8 @@ class Wapp:
         # Assign Miscellanous Object
         self.misc = misc
         # Set Default Target
-        self.__target__ = dict(addr = None,
-            auth = dict(user = None, password = None)
-        )
-        # Default target Object
-        self.__settarget__(target)
-        self.__settarget__(referer, True)
+        self.__target__ = default_target()
+        self.__referer__ = default_target()
         
         # Set Reference Object
         wapp = self
@@ -180,15 +186,13 @@ class Wapp:
     ##########################################################################################################################
 
     # Set wapp Target
-    def __settarget__(
+    def set_target(
         self,
         target: dict[str, str | dict[str, str]],
         isref: bool = False
     ):
         # Default target Object
-        tar = dict(addr = None,
-            auth = dict(user = None, password = None)
-        )
+        tar = default_target()
         
         # Set Target Function
         def _settar(t, d):
