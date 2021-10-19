@@ -31,6 +31,9 @@ class Wapp:
         # Set Default Target
         self.__target__ = default_target()
         self.__referer__ = default_target()
+        # Default target Object
+        self.set_target(target)
+        self.set_target(referer, True)
         
         # Set Reference Object
         wapp = self
