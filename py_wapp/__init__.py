@@ -31,7 +31,11 @@ from ._interf import Interface
 class Bot:
 
     # Init Bot
-    def __init__(self, target):
+    def __init__(
+        self,
+        target: dict[str, str | dict[str, str]],
+        referer: dict[str, str | dict[str, str]] = None
+    ):
         
         # Set Misc Reference
         self.misc = misc
@@ -45,13 +49,10 @@ class Bot:
         self.chat = Chat(self.misc)
         
         # Set Bot Wapp Object
-        self.wapp = Wapp(self.misc)
-        
-        ##########################################################################################################################
+        self.wapp = Wapp(self.misc, target, referer)
         
         # Set Bot Info
-        self.wapp.__settarget__(target)
-        self.hd = None
+        self.hostd = None
         
         ##########################################################################################################################
         
@@ -146,19 +147,19 @@ class Bot:
         self.sql.start()
         # Start Bot Server
         if not self.api.start():
-            raise Exception('Flask server not started')
+            raise Exception('Flask Server not started')
         # Start Interface Service
-        hd = self.i.start(self.wapp)
-        if hd == None:
+        hostd = self.i.start(self.wapp)
+        if hostd == None:
             raise Exception('Bot Interface not started')
         # Update Bot Info
-        self.hd = hd
+        self.hostd = hostd
         self.chat.__replace__.update({
-            self.hd['wid']['user'] : ''
+            self.hostd['wid']['user'] : ''
         })
         # Log Finished
         self.misc.log(
-            self.hd['name'] + '::started'
+            self.hostd['name'] + '::started'
         )
 
 ##########################################################################################################################

@@ -11,13 +11,15 @@ from ._wapp import Wapp
 class Interface:
     
     # Init Interface
-    def __init__(self, misc: py_misc, actions: Actions):
-        # Set Misc Reference
-        self.misc = misc
+    def __init__(self, actions: Actions):
         # Interface Actions Object
         self.__actions__ = actions
         # Set Connection Status Object
         self.__conn__ = None
+        
+    @property
+    def misc(self):
+        return self.__actions__.misc
         
     # Set User
     def user(self, user):
