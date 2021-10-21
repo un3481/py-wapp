@@ -46,7 +46,7 @@ class Actions:
                 or len(name) == 0):
                 return False
             # Set Caller
-            function = self.misc.call.safe(function)
+            function = self.misc.call.Safe(function)
             function.__name__ = name
             function.__logging__ = log
             # Nest Objects
