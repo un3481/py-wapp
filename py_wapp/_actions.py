@@ -1,5 +1,10 @@
 
+##########################################################################################################################
+
 import py_misc
+import flask
+
+##########################################################################################################################
 
 # Class Actions
 class Actions:
@@ -10,7 +15,10 @@ class Actions:
         self.misc = misc
         # Add API Execute Actions
         self.__api__ = api
-        self.__route__ = self.__api__.add(route, methods=['GET', 'POST'])(self.__execute__)
+        self.__route__ = self.__api__.route(
+            route,
+            methods=['GET', 'POST']
+        )(self.__execute__)
         # Actions Dictionary
         self.__actions__ = dict()
         
@@ -37,6 +45,8 @@ class Actions:
         # Return Condtion
         return cond
     
+    ##########################################################################################################################
+
     # Add Action
     def add(self, name: str, log: bool = True):
         def __decorator__(function):
@@ -55,6 +65,8 @@ class Actions:
             return function
         # Return Decorator
         return __decorator__
+    
+    ##########################################################################################################################
     
     # Append Actions
     def append(self, *args, **kwargs):
@@ -77,18 +89,26 @@ class Actions:
         # Return True
         return True
     
+    ##########################################################################################################################
+    
     # Execute Action
-    def __execute__(self, req):
+    def __execute__(self, req: flask.request, res: flask.Response) -> flask.Response:
+        # Init Variables
+        rjson = req.json
         data = None
+        # Serialize
+        json = self.misc.json
+        jsonify = self.misc.flask.jsonify
+        serialize = lambda d: json.loads(json.dumps(d))
         try: # Try Block
             # Check Parameters
-            if not isinstance(req, dict): raise Exception('bad request')
-            if 'action' not in req: raise Exception('action missing in request')
-            if not isinstance(req['action'], str): raise Exception('action must be a string')
-            if len(req['action']) == 0: raise Exception('action not valid')
-            if req['action'] not in self.__actions__: raise Exception('action not found')
+            if not isinstance(rjson, dict): raise Exception('bad request')
+            if 'action' not in rjson: raise Exception('action missing in request')
+            if not isinstance(rjson['action'], str): raise Exception('action must be a string')
+            if len(rjson['action']) == 0: raise Exception('action not valid')
+            if rjson['action'] not in self.__actions__: raise Exception('action not found')
             # Get Action Name
-            action = req['action']
+            action = rjson['action']
             # Define Log
             locale = self.__actions__[action].__locale__
             ip = self.__api__.flask.request.remote_addr
@@ -97,15 +117,22 @@ class Actions:
             if self.__actions__[action].__logging__:
                 self.misc.log(log)
             # Execute Action
-            data = self.__actions__[action](req)
+            data = self.__actions__[action](rjson)
         # If Error Occurred
         except Exception as error:
-            return dict(done=False, error=str(error))
+            return res(
+                jsonify(dict(done=False, error=str(error))), 
+                status=200
+            )
         try: # Make Serializable
-            json = self.misc.json
-            serialize = lambda d: json.loads(json.dumps(d))
             try: data = serialize(data)
             except: data = serialize(data.__dict__)
         except: data = None
         # If Success
-        return dict(done=True, data=data)
+        return res(
+            jsonify(dict(done=True, data=data)), 
+            status=200
+        )
+
+##########################################################################################################################
+    

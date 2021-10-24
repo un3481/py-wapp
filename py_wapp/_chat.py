@@ -5,7 +5,6 @@ from ._wapp import Wapp
 #                                                   ERROR MESSAGE CLASS                                                  #
 ##########################################################################################################################
 
-
 # Error Object
 class ErrorMessages:
     # Init Chat Errors
@@ -94,3 +93,5 @@ class Chat:
         delta += '{} minuto'.format(m) if m != 0 else ''
         delta += 's' if m > 1 else ''
         return delta
+    
+##########################################################################################################################
