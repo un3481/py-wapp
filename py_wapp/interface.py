@@ -1,7 +1,13 @@
 
+##########################################################################################################################
+
+# Imports
 import py_misc
-from ._actions import Actions
-from ._wapp import Wapp
+import requests
+
+# Modules
+from . import actions
+from . import wapp
 
 ##########################################################################################################################
 #                                                         INTERFACE                                                      #
@@ -11,15 +17,11 @@ from ._wapp import Wapp
 class Interface:
     
     # Init Interface
-    def __init__(self, actions: Actions):
+    def __init__(self, act: actions.Actions):
         # Interface Actions Object
-        self.__actions__ = actions
+        self.__actions__ = act
         # Set Connection Status Object
         self.__conn__ = None
-        
-    @property
-    def misc(self):
-        return self.__actions__.misc
         
     # Set User
     def user(self, user):
@@ -35,9 +37,9 @@ class Interface:
             r = self.wapp.req(None)
             if r == False: raise Exception('HTTP request to Target failed')
             else: r.raise_for_status()
-        except self.misc.requests.exceptions.ConnectionError: return False
-        except self.misc.requests.exceptions.HTTPError: return False
-        except self.misc.requests.exceptions.Timeout: return False
+        except requests.exceptions.ConnectionError: return False
+        except requests.exceptions.HTTPError: return False
+        except requests.exceptions.Timeout: return False
         except: return False
         return True
     
@@ -50,7 +52,7 @@ class Interface:
             l1 = 'Connection with Node Established'
             l2 = 'No Connection with Node'
             log = l1 if conn else l2
-            self.misc.log(log)
+            py_misc.log(log)
         # Return Connection Status
         return self.__conn__
     
@@ -59,13 +61,13 @@ class Interface:
         return self.__actions__.add(name, log)
     
     # Start Interface App
-    def start(self, wapp: Wapp):
+    def start(self, wa: wapp.Wapp):
+        # Assign Wapp
+        self.wapp = wa
         # Set Default Value
         data = None
-        # Assign Wapp
-        self.wapp = wapp
         # Check Link Cyclically
-        self.misc.schedule.each.one.second.do(self.__link__)
+        py_misc.schedule.each.one.second.do(self.__link__)
         try: # Get Bot Phone Number
             req = self.wapp.req({ 'action':'host_device' })
             data = req.json()['data']

@@ -1,5 +1,9 @@
 
+##########################################################################################################################
+
+import json
 import py_misc
+import requests
 from typing import Any, Callable
 
 ##########################################################################################################################
@@ -22,12 +26,9 @@ class Wapp:
     # Init Message
     def __init__(
         self,
-        misc: py_misc,
         target: dict[str, str | dict[str, str]],
         referer: dict[str, str | dict[str, str]] = None
     ):
-        # Assign Miscellanous Object
-        self.misc = misc
         # Set Default Target
         self.__target__ = default_target()
         self.__referer__ = default_target()
@@ -38,32 +39,6 @@ class Wapp:
         # Set Reference Object
         wapp = self
         
-        ##########################################################################################################################
-        #                                                          ACTIONS                                                       #
-        ##########################################################################################################################
-
-        # Message-Trigger
-        class MessageTrigger:
-            
-            def __init__(self):
-                # Set Default Reply
-                self.__reply__ = (lambda: None)
-
-            @property
-            def wapp(self): return wapp
-            @property
-            def misc(self): return self.wapp.misc
-
-            # Reply Trigger
-            def reply(self, function: Callable[[Any], Any]):
-                if type(self.id) != str: return function
-                self.__reply__ = self.misc.call.Safe(function)
-                self.wapp.__reply__.add(self.id, self.__reply__)
-                return self.__reply__
-        
-        # Nest Classes
-        self.MessageTrigger = MessageTrigger
-
         ##########################################################################################################################
         #                                                          ACTIONS                                                       #
         ##########################################################################################################################
@@ -87,18 +62,41 @@ class Wapp:
                         'isGroupMsg': False,
                     }
                 else: self.raw_data = obj
-                try: # Get Quoted
+                
+                # Get Quoted
+                try:
                     q = self.raw_data['quotedMsgObj']
                     self.quoted = self.__class__(q)
                 except: q = None
+                
+                # Cycli Reference
+                msg = self
+    
+                # Message-Trigger
+                class MessageTrigger:
+
+                    def __init__(self):
+                        # Set Message
+                        self.__msg__ = msg
+                        # Set Default Reply
+                        self.__reply__ = (lambda: None)
+
+                    @property
+                    def wapp(self): return wapp
+
+                    # Reply Trigger
+                    def reply(self, function: Callable[[Any], Any]):
+                        if type(self.__msg__.id) != str: return function
+                        self.__reply__ = py_misc.call.Safe(function)
+                        self.wapp.__reply__.add(self.__msg__.id, self.__reply__)
+                        return self.__reply__
+                
                 # Set Message-Trigger
-                self.on = self.wapp.MessageTrigger()
+                self.on = MessageTrigger()
 
             @property
             def wapp(self): return wapp
-            @property
-            def misc(self): return self.wapp.misc
-
+            
             @property
             def id(self) -> str:
                 return self.raw_data['id']
@@ -143,8 +141,6 @@ class Wapp:
 
             @property
             def wapp(self): return wapp
-            @property
-            def misc(self): return self.wapp.misc
 
             # Add Reply
             def add(
@@ -159,7 +155,7 @@ class Wapp:
                 try: del self.__replyables__[msg_id]
                 except: self.__replyables__[msg_id] = None
                 # Add to Dictionary
-                self.__replyables__[msg_id] = self.misc.call.Safe(function)
+                self.__replyables__[msg_id] = py_misc.call.Safe(function)
                 return True
 
             # On Reply
@@ -227,12 +223,12 @@ class Wapp:
         self,
         json,
         target: dict[str, str | dict[str, str]] = None
-    ) -> py_misc.requests.Response:
+    ) -> requests.Response:
         # Set Default Target
         if target == None:
             target = self.__target__
         try: # Try Request
-            r = self.misc.requests.post(
+            r = requests.post(
                 json = json,
                 url = target['addr'],
                 auth = (
@@ -278,7 +274,7 @@ class Wapp:
         # Check Status Code
         if sent.status_code != 200: return None
         # Convert to Json
-        sent = self.misc.json.loads(sent.text)
+        sent = json.loads(sent.text)
         # Fix Errors
         if 'done' not in sent: return None
         if not sent['done']: return None
@@ -286,7 +282,7 @@ class Wapp:
         sent = self.Message(sent['data'])
         # Logging
         log = 'api::send_msg' if type(log) != str else log
-        self.misc.log('Sent({}) To({})'.format(log, to))
+        py_misc.log('Sent({}) To({})'.format(log, to))
         # Return Sent
         return sent
 

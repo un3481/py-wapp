@@ -1,6 +1,9 @@
 
 ##########################################################################################################################
 
+# Imports
+import json
+import inspect
 import py_misc
 import flask
 
@@ -10,9 +13,7 @@ import flask
 class Actions:
     
     # Init Actions
-    def __init__(self, misc: py_misc, route: str, api: py_misc.API):
-        # Set Misc Reference
-        self.misc = misc
+    def __init__(self, route: str, api: py_misc.API):
         # Add API Execute Actions
         self.__api__ = api
         self.__route__ = self.__api__.route(
@@ -37,7 +38,7 @@ class Actions:
     def check(self, req, param: str, clas: type = None):
         cond = isinstance(req, dict) and isinstance(param, str) and param in req
         # Check Class
-        if cond and self.misc.inspect.isclass(clas):
+        if cond and inspect.isclass(clas):
             try:  # Check for Iterable
                 iter(clas)
                 cond = any(isinstance(req[param], c) for c in clas)
@@ -56,7 +57,7 @@ class Actions:
                 or len(name) == 0):
                 return False
             # Set Caller
-            function = self.misc.call.Safe(function)
+            function = py_misc.call.Safe(function)
             function.__name__ = name
             function.__logging__ = log
             # Nest Objects
@@ -97,8 +98,7 @@ class Actions:
         rjson = req.json
         data = None
         # Serialize
-        json = self.misc.json
-        jsonify = self.misc.flask.jsonify
+        jsonify = self.__api__.flask.jsonify
         serialize = lambda d: json.loads(json.dumps(d))
         try: # Try Block
             # Check Parameters
@@ -115,7 +115,7 @@ class Actions:
             log = 'Exec({}) From({})'.format(locale, ip)
             # Log Action
             if self.__actions__[action].__logging__:
-                self.misc.log(log)
+                py_misc.log(log)
             # Execute Action
             data = self.__actions__[action](rjson)
         # If Error Occurred

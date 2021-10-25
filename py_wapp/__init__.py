@@ -14,14 +14,17 @@
 ##########################################################################################################################
 
 # Import Miscellaneous
-import py_misc as misc
+import py_misc
 
 # Import Local Modules
-from ._wapp import Wapp
-from ._sql import SQL
-from ._chat import Chat
-from ._actions import Actions
-from ._interf import Interface
+from . import wapp
+from . import sql
+from . import chat
+from . import actions
+from . import interface
+
+# Make Wapp Available
+Wapp = wapp.Wapp
 
 ##########################################################################################################################
 #                                                         BOT CLASS                                                      #
@@ -36,20 +39,14 @@ class Bot:
         target: dict[str, str | dict[str, str]],
         referer: dict[str, str | dict[str, str]] = None
     ):
-        
-        # Set Misc Reference
-        self.misc = misc
-        
-        ##########################################################################################################################
-
         # Set Bot SQL Object
-        self.sql = SQL(self.misc)
+        self.sql = sql.SQL()
         
         # Set Bot Chat Object
-        self.chat = Chat(self.misc)
+        self.chat = chat.Chat()
         
         # Set Bot Wapp Object
-        self.wapp = Wapp(self.misc, target, referer)
+        self.wapp = wapp.Wapp(target, referer)
         
         # Set Bot Info
         self.hostd = None
@@ -57,14 +54,14 @@ class Bot:
         ##########################################################################################################################
         
         # Set Bot Api
-        self.api = self.misc.API(log=False).host('0.0.0.0')
+        self.api = py_misc.API(log=False).host('0.0.0.0')
 
         # Set Bot Actions
-        self.actions = Actions(self.misc, '/bot/', self.api)
+        self.actions = actions.Actions('/bot/', self.api)
         
         # Set Bot Interface Actions
-        self.i = Interface(
-            Actions(self.misc, '/i/', self.api)
+        self.i = interface.Interface(
+            actions.Actions('/i/', self.api)
         )
         
         ##########################################################################################################################
@@ -95,11 +92,11 @@ class Bot:
     
     # Keep Alive
     def keepalive(self):
-        self.misc.keepalive()
+        py_misc.keepalive()
     
     # Logging
     def log(self, log):
-        return self.misc.log(log)
+        return py_misc.log(log)
     
     # MySQL Connection
     def sqlconn(self, mysqlconn):
@@ -158,7 +155,7 @@ class Bot:
             self.hostd['wid']['user'] : ''
         })
         # Log Finished
-        self.misc.log(
+        py_misc.log(
             self.hostd['name'] + '::started'
         )
 

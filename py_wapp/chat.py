@@ -1,5 +1,13 @@
 
-from ._wapp import Wapp
+##########################################################################################################################
+
+# Imports
+import copy
+import random
+import unidecode
+
+# Modules
+from . import wapp
 
 ##########################################################################################################################
 #                                                   ERROR MESSAGE CLASS                                                  #
@@ -8,12 +16,8 @@ from ._wapp import Wapp
 # Error Object
 class ErrorMessages:
     # Init Chat Errors
-    def __init__(self, wapp: Wapp):
-        self.wapp = wapp
-    
-    @property
-    def misc(self):
-        return self.wapp.misc
+    def __init__(self, wa: wapp.Wapp):
+        self.wapp = wa
     
     @property
     def understand(self):
@@ -22,7 +26,7 @@ class ErrorMessages:
             'Sinceramente não entendi o que você falou.',
             'Não fui capaz de interpretar o que você disse.',
         ]
-        return self.misc.random.choice(p)
+        return random.choice(p)
 
 ##########################################################################################################################
 #                                                      CHAT CLASS                                                        #
@@ -32,9 +36,9 @@ class ErrorMessages:
 class Chat:
     
     # Init Chat Class
-    def __init__(self, wapp: Wapp):
+    def __init__(self, wa: wapp.Wapp):
         # Set Misc Reference
-        self.wapp = wapp
+        self.wapp = wa
         # Nest Object
         self.error = ErrorMessages(self.wapp)
         # Set To-Replace Dictionary
@@ -42,17 +46,13 @@ class Chat:
             '  ': ' '
         }
     
-    @property
-    def misc(self):
-        return self.wapp.misc
-    
     # Clean Message
     def clean(self, message, lower=True):
         # Select Actual Text
         if isinstance(message, self.wapp.Message):
-            strin = self.misc.copy.deepcopy(message.body)
+            strin = copy.deepcopy(message.body)
         elif isinstance(message, str):
-            strin = self.misc.copy.deepcopy(message)
+            strin = copy.deepcopy(message)
         else: return False
         # Turn to Lower-Case
         strin = strin.lower() if lower else strin
@@ -64,14 +64,14 @@ class Chat:
         # Remove Trailing Spaces
         strin = strin.strip()
         # Encode UTF-8
-        strin = self.misc.unidecode.unidecode(strin)
+        strin = unidecode.unidecode(strin)
         return strin
     
     # Check for Affirmative
     def yes(self, message=None):
         affirm = ['sim', 'positivo', 'correto', 'certo', 'isso']
         if message == None:
-            return self.misc.random.choice(affirm)
+            return random.choice(affirm)
         else:
             return self.clean(message) in affirm
     
@@ -79,7 +79,7 @@ class Chat:
     def no(self, message=None):
         neg = ['nao', 'negativo', 'errado']
         if message == None:
-            return self.misc.random.choice(neg)
+            return random.choice(neg)
         else: return self.clean(message) in neg
     
     # Get Timedelta as String

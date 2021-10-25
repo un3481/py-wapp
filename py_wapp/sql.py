@@ -1,4 +1,6 @@
 
+##########################################################################################################################
+
 import py_misc
 
 ##########################################################################################################################
@@ -9,9 +11,7 @@ import py_misc
 class SQL:
 
     # Init SQL
-    def __init__(self, misc: py_misc):
-        # Set Misc Reference
-        self.misc = misc
+    def __init__(self):
         # Set Connection Status Object
         self.__conn__ = None
     
@@ -22,7 +22,7 @@ class SQL:
         self.user = self.mysql.kwargs['user']
         self.password = self.mysql.kwargs['password']
         # Set Logs SQL Connection
-        self.misc.log.sqlconn(self.mysql)
+        py_misc.log.sqlconn(self.mysql)
 
     # Check MySQL Link
     def __link__(self):
@@ -33,14 +33,14 @@ class SQL:
                 l1 = 'Connection with MySQL Established'
                 l2 = 'No Connection with MySQL'
                 log = l1 if conn else l2
-                self.misc.log(log)
+                py_misc.log(log)
             return self.__conn__
         except: return False
     
     # Start MySQL Connection
     def start(self):
         # Check Link Cyclically
-        self.misc.schedule.each.one.second.do(self.__link__)
+        py_misc.schedule.each.one.second.do(self.__link__)
         # Return Done
         return True
             
