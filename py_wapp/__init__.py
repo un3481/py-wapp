@@ -17,11 +17,11 @@
 import py_misc
 
 # Import Local Modules
-from . import wapp
-from . import sql
-from . import chat
-from . import actions
-from . import interface
+from .modules import wapp
+from .modules import sql
+from .modules import chat
+from .modules import actions
+from .modules import interface
 
 # Make Wapp Available
 Wapp = wapp.Wapp
