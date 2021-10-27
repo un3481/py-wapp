@@ -14,6 +14,8 @@ setup(
         'py_wapp/modules'
     ],
     install_requires=[
-        'py_misc @ git+https://github.com/anthony-freitas/py-misc#egg=py-misc'
+        'py_misc @ git+https://github.com/anthony-freitas/py-misc#egg=py-misc',
+        'unidecode',
+        'requests'
     ]
 )
