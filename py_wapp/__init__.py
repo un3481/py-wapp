@@ -42,11 +42,11 @@ class Bot:
         # Set Bot SQL Object
         self.sql = sql.SQL()
         
-        # Set Bot Chat Object
-        self.chat = chat.Chat()
-        
         # Set Bot Wapp Object
         self.wapp = wapp.Wapp(target, referer)
+        
+        # Set Bot Chat Object
+        self.chat = chat.Chat(self.wapp)
         
         # Set Bot Info
         self.hostd = None
