@@ -100,6 +100,11 @@ class Bot:
     @property
     def bot(self): return self
     
+    # Class Reference
+    Wapp = Wapp
+    Message = Wapp.Message
+    Reply = Wapp.Reply
+    
     ##########################################################################################################################
     
     # Keep Alive
