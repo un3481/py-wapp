@@ -87,10 +87,10 @@ class Chat:
         hd = t.seconds // 3600
         h = (t.days * 24) + hd
         m = (t.seconds - (hd * 3600)) // 60
-        delta = '{} hora'.format(h) if h != 0 else ''
+        delta = f'{h} hora' if h != 0 else ''
         delta += 's' if h > 1 else ''
         delta += ' e ' if h != 0 and m != 0 else ''
-        delta += '{} minuto'.format(m) if m != 0 else ''
+        delta += f'{m} minuto' if m != 0 else ''
         delta += 's' if m > 1 else ''
         return delta
     

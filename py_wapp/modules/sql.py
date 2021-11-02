@@ -33,7 +33,7 @@ class SQL:
                 l1 = 'Connection with MySQL Established'
                 l2 = 'No Connection with MySQL'
                 log = l1 if conn else l2
-                py_misc.log(log)
+                py_misc.log(log=log)
             return self.__conn__
         except: return False
     

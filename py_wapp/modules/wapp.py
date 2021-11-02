@@ -2,9 +2,15 @@
 ##########################################################################################################################
 
 import json
+import flask
 import py_misc
 import requests
 from typing import Any, Callable
+
+#################################################################################################################################################
+
+Request = flask.request
+Response = flask.Response
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -145,35 +151,41 @@ class Wapp:
             # Add Reply
             def add(
                 self,
-                msg_id: str,
-                function: Callable[[Any], Any]
+                id: str,
+                function: Callable[[Message], Any]
             ):
                 # Check Parameters
                 if not callable(function):
                     return False
                 # Delete Old Replyable
-                try: del self.__replyables__[msg_id]
-                except: self.__replyables__[msg_id] = None
+                try: del self.__replyables__[id]
+                except: self.__replyables__[id] = None
                 # Add to Dictionary
-                self.__replyables__[msg_id] = py_misc.call.Safe(function)
+                self.__replyables__[id] = py_misc.call.Safe(function)
                 return True
 
             # On Reply
-            def __execute__(self, req):
+            def __execute__(self, req: Request, res: Response) -> Response:
+                # Get Parameters
+                rjson = req.json
                 # Check Parameters
-                if (('msg_id' not in req)
-                    or (req['msg_id'] not in self.__replyables__)
-                    or ('reply' not in req)):
-                    return False
+                if not isinstance(rjson, dict): raise Exception('bad request')
+                if 'id' not in rjson: raise Exception('key "id" not valid')
+                if rjson['id'] not in self.__replyables__: raise Exception('key "id" not valid')
+                if 'reply' not in rjson: raise Exception('key "reply" not valid')
                 # Get Reply
-                reply = req['reply']
-                msg_id = req['msg_id']
+                reply = rjson['reply']
+                id = rjson['id']
                 # Construct Reply
                 reply = self.wapp.Message(reply)
                 # Execute Function
-                data = self.__replyables__[msg_id](reply)
+                data = self.__replyables__[id](reply)
                 # Return Data
-                return data
+                return res(
+                    json=json.dumps(data),
+                    mimetype='application/json',
+                    status=200
+                )
         
         # Nest Class
         self.Reply = Reply
@@ -261,14 +273,17 @@ class Wapp:
         tar = target if target != None else self.__target__
         ref = referer if referer != None else self.__referer__ 
         # Interface Send Message
-        sent = self.req(dict(
-            action = 'send_msg',
-            to = to,
-            text = text,
-            log = log,
-            quote_id = quote_id,
-            referer = ref
-        ), tar)
+        sent = self.req(
+            {
+                'action': 'send_msg',
+                'to': to,
+                'text': text,
+                'log': log,
+                'quote_id': quote_id,
+                'referer': ref
+            },
+            tar
+        )
         # On Interface Error
         if sent == None: return None
         # Check Status Code
@@ -282,7 +297,7 @@ class Wapp:
         sent = self.Message(sent['data'])
         # Logging
         log = 'api::send_msg' if type(log) != str else log
-        py_misc.log('Sent({}) To({})'.format(log, to))
+        py_misc.log(log=f'Sent(${log}) To(${to})')
         # Return Sent
         return sent
 

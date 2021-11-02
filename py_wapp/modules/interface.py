@@ -52,7 +52,7 @@ class Interface:
             l1 = 'Connection with Node Established'
             l2 = 'No Connection with Node'
             log = l1 if conn else l2
-            py_misc.log(log)
+            py_misc.log(log=log)
         # Return Connection Status
         return self.__conn__
     

@@ -7,6 +7,11 @@ import inspect
 import py_misc
 import flask
 
+#################################################################################################################################################
+
+Request = flask.request
+Response = flask.Response
+
 ##########################################################################################################################
 
 # Class Actions
@@ -19,7 +24,9 @@ class Actions:
         self.__route__ = self.__api__.route(
             route,
             methods=['GET', 'POST']
-        )(self.__execute__)
+        )(
+            self.__execute__
+        )
         # Actions Dictionary
         self.__actions__ = dict()
         
@@ -27,15 +34,15 @@ class Actions:
     def actions(self): return self
     
     # Set User
-    def user(self, user):
+    def user(self, user: str):
         return self.__route__.user(user)
     
     # Set Pasword
-    def password(self, password):
+    def password(self, password: str):
         return self.__route__.password(password)
     
     # Check Request
-    def check(self, req, param: str, clas: type = None):
+    def check(self, req: dict, param: str, clas: type = None):
         cond = isinstance(req, dict) and isinstance(param, str) and param in req
         # Check Class
         if cond and inspect.isclass(clas):
@@ -52,10 +59,9 @@ class Actions:
     def add(self, name: str, log: bool = True):
         def __decorator__(function):
             # Check Parameters
-            if (not callable(function)
-                or not isinstance(name, str)
-                or len(name) == 0):
-                return False
+            if not callable(function): return
+            if not isinstance(name, str): return
+            if len(name) == 0: return
             # Set Caller
             function = py_misc.call.Safe(function)
             function.__name__ = name
@@ -93,44 +99,52 @@ class Actions:
     ##########################################################################################################################
     
     # Execute Action
-    def __execute__(self, req: flask.request, res: flask.Response) -> flask.Response:
-        # Init Variables
+    def __execute__(self, req: Request, res: Response) -> Response:
+        # Get Parameters
         rjson = req.json
+        # Set Data Variable
         data = None
-        # Serialize
-        jsonify = self.__api__.flask.jsonify
-        serialize = lambda d: json.loads(json.dumps(d))
         try: # Try Block
             # Check Parameters
             if not isinstance(rjson, dict): raise Exception('bad request')
-            if 'action' not in rjson: raise Exception('action missing in request')
-            if not isinstance(rjson['action'], str): raise Exception('action must be a string')
-            if len(rjson['action']) == 0: raise Exception('action not valid')
+            if 'action' not in rjson: raise Exception('key "action" not in request')
+            if not isinstance(rjson['action'], str): raise Exception('key "action" not valid')
+            if len(rjson['action']) == 0: raise Exception('key "action" not valid')
             if rjson['action'] not in self.__actions__: raise Exception('action not found')
             # Get Action Name
             action = rjson['action']
             # Define Log
             locale = self.__actions__[action].__locale__
             ip = self.__api__.flask.request.remote_addr
-            log = 'Exec({}) From({})'.format(locale, ip)
+            log = f'Exec({locale}) From({ip})'
             # Log Action
             if self.__actions__[action].__logging__:
-                py_misc.log(log)
+                py_misc.log(log=log)
             # Execute Action
             data = self.__actions__[action](rjson)
         # If Error Occurred
         except Exception as error:
             return res(
-                jsonify(dict(done=False, error=str(error))), 
+                json.dumps({
+                    'done': False,
+                    'error': str(error)
+                }),
+                mimetype='application/json',
                 status=200
             )
+        # Serialize
+        serialize = lambda d: json.loads(json.dumps(d))
         try: # Make Serializable
             try: data = serialize(data)
             except: data = serialize(data.__dict__)
         except: data = None
         # If Success
         return res(
-            jsonify(dict(done=True, data=data)), 
+            json.dumps({
+                'done': True, 
+                'data': data
+            }),
+            mimetype='application/json',
             status=200
         )
 
