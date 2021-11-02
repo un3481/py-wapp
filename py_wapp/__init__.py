@@ -172,7 +172,7 @@ class Bot:
         quote_id: str = None,
         target: dict[str, str | dict[str, str]] = None,
         referer: dict[str, str | dict[str, str]] = None
-    ):
+    ) -> Wapp.Message | None:
         return self.wapp.send(
             to=to,
             text=text,
