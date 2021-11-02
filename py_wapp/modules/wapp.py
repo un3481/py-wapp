@@ -91,8 +91,8 @@ class Wapp:
                     def wapp(self): return wapp
 
                     # Reply Trigger
-                    def reply(self, function: Callable[[Any], Any]):
-                        if type(self.__msg__.id) != str: return function
+                    def reply(self, function: Callable[[Message], Any]):
+                        if isinstance(self.__msg__.id, str): return function
                         self.__reply__ = py_misc.call.Safe(function)
                         self.wapp.__reply__.add(self.__msg__.id, self.__reply__)
                         return self.__reply__
