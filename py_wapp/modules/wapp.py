@@ -16,11 +16,7 @@ Response = flask.Response
 ##########################################################################################################################
 
 # Wapp Type Reference
-def moduleTypes(ignore: bool):
-    if ignore: return None
-    from . import wapp
-    return wapp
-wapp = moduleTypes(True)
+wappType = (lambda do: Wapp if do else None)(False)
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -42,7 +38,7 @@ class Message:
     # Init Message
     def __init__(
         self,
-        wapp: wapp.Wapp,
+        wapp: wappType,
         message: dict[str, Any] = None
     ):
         # Set Referece
@@ -134,7 +130,7 @@ class MessageTrigger:
 class Reply:
 
     # Init Reply
-    def __init__(self, wapp: wapp.Wapp):
+    def __init__(self, wapp: wappType):
         # Set Replyables
         self.__replyables__: dict[
             str,
