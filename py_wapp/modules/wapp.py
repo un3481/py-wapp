@@ -8,13 +8,20 @@ import py_misc
 import requests
 from typing import Any, Callable
 
-# Modules
-from .wapp import Wapp as _Wapp
-
 #################################################################################################################################################
 
 Request = flask.request
 Response = flask.Response
+
+##########################################################################################################################
+
+# Wapp Type Reference
+def typewapp(ignore: bool):
+    if ignore: raise Exception('wapp')
+    from . import wapp
+    return wapp
+try: wapp = typewapp(True)
+except: pass
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -36,7 +43,7 @@ class Message:
     # Init Message
     def __init__(
         self,
-        wapp: _Wapp,
+        wapp: wapp.Wapp,
         message: dict[str, Any] = None
     ):
         # Set Referece
@@ -128,7 +135,7 @@ class MessageTrigger:
 class Reply:
 
     # Init Reply
-    def __init__(self, wapp: _Wapp):
+    def __init__(self, wapp: wapp.Wapp):
         # Set Replyables
         self.__replyables__: dict[
             str,
