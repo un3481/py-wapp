@@ -9,7 +9,7 @@ import requests
 from typing import Any, Callable
 
 # Modules
-from .. import modules
+from . import wapp
 
 #################################################################################################################################################
 
@@ -36,7 +36,7 @@ class Message:
     # Init Message
     def __init__(
         self,
-        wapp: modules.wapp.Wapp,
+        wapp: wapp.Wapp,
         message: dict[str, Any] = None
     ):
         # Set Referece
@@ -128,7 +128,7 @@ class MessageTrigger:
 class Reply:
 
     # Init Reply
-    def __init__(self, wapp: modules.wapp.Wapp):
+    def __init__(self, wapp: wapp.Wapp):
         # Set Replyables
         self.__replyables__: dict[
             str,
