@@ -169,7 +169,7 @@ class Bot:
         to: str,
         text: str,
         log: str = 'api::send_msg',
-        quote_id: str = None,
+        quote: str = None,
         target: dict[str, str | dict[str, str]] = None,
         referer: dict[str, str | dict[str, str]] = None
     ) -> Wapp.Message | None:
@@ -177,7 +177,7 @@ class Bot:
             to=to,
             text=text,
             log=log,
-            quote_id=quote_id,
+            quote=quote,
             target=target,
             referer=referer
         )
