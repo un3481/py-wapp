@@ -16,12 +16,11 @@ Response = flask.Response
 ##########################################################################################################################
 
 # Wapp Type Reference
-def typewapp(ignore: bool):
-    if ignore: raise Exception('wapp')
+def moduleTypes(ignore: bool):
+    if ignore: return None
     from . import wapp
     return wapp
-try: wapp = typewapp(True)
-except: pass
+wapp = moduleTypes(True)
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
