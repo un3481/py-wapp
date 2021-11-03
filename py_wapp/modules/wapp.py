@@ -62,8 +62,8 @@ class Message:
         
         # Set Message-Trigger
         self.on = MessageTrigger(message=self)
-        
-    Trigger = (lambda: MessageTrigger)()
+        # Nest Objects 
+        self.Trigger = MessageTrigger
     
     @property
     def id(self) -> str:
