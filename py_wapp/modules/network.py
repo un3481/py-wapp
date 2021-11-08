@@ -32,23 +32,10 @@ class NetworkWapp:
         # Reference Bot
         self.bot = bot
         # Add API Execute Actions
-        self.__users__ = dict()
+        self.users: dict[str, str] = dict()
         
     @property
     def network(self): return self
-
-    ##########################################################################################################################
-
-    # Set Route
-    def route(self, route: str, app: py_misc.API):
-        self.__route__ = route
-        self.__app__ = app
-    
-    # Set Authentication
-    def adduser(self, user: str, password: str):
-        return self.__users__.update({
-            (user): password
-        })
 
     ##########################################################################################################################
 
@@ -71,14 +58,20 @@ class NetworkWapp:
     
     ##########################################################################################################################
 
+    # Set Route
+    def route(self, route: str, app: py_misc.API):
+        self.__route__ = route
+        self.__app__ = app
+    
+    ##########################################################################################################################
+
     # Add Action
     def add(self, action: str):
         # Check Parameters
-        if not isinstance(action, str):
-            raise Exception('argument "action" not valid')
-        if len(action) == 0:
-            raise Exception('argument "action" not valid')
-        # Return Decorator
+        if not isinstance(action, str): raise Exception('argument "action" not valid')
+        if len(action) == 0: raise Exception('argument "action" not valid')
+        
+        # Decorator
         def __decorator__(
             do: typing.Callable[
                 [Request], typing.Any
@@ -87,15 +80,18 @@ class NetworkWapp:
             # Check Parameters
             if not callable(do):
                 raise Exception('argument "do" not valid')
+
             # Set Caller
             dosafe = py_misc.call.Safe(do)
             dosafe.__name__ = action
             dosafe.__logging__ = True
+
             # Set Route
             decorator = self.__app__.route(
                 route=f'{self.__route__}/{action}',
                 methods=['GET', 'POST']
             )
+
             # Apply Route
             @decorator
             def endnode(req: Request, res: Response):
@@ -111,8 +107,13 @@ class NetworkWapp:
                     mimetype='application/json',
                     status=200
                 )
+            
+            # Set Authentication
+            endnode.users.update(self.users)
+
             # Return Function
             return endnode
+        
         # Return Decorator
         return __decorator__
     
