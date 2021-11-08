@@ -22,8 +22,7 @@ import py_misc
 from .modules import wapp
 from .modules import sql
 from .modules import chat
-from .modules import actions
-from .modules import interface
+from .modules import network
 
 # Make Wapp Available
 Wapp = wapp.Wapp
@@ -43,8 +42,8 @@ class Bot:
     # Init Bot
     def __init__(
         self,
-        target: dict[str, str | dict[str, str]],
-        referer: dict[str, str | dict[str, str]] = None
+        target: dict[str, str],
+        referer: dict[str, str] = None
     ):
         # Set Bot SQL Object
         self.sql = sql.SQL()
@@ -53,48 +52,14 @@ class Bot:
         self.wapp = wapp.Wapp(target, referer)
         
         # Set Bot Chat Object
-        self.chat = chat.Chat(self.wapp)
-        
-        # Set Bot Info
-        self.hostd = None
-        
-        ##########################################################################################################################
-        
-        # Set Bot Api
-        self.api = py_misc.API(log=False).host('0.0.0.0')
+        self.chat = chat.Chat(self)
 
         # Set Bot Actions
-        self.actions = actions.Actions('/bot/', self.api)
-        
-        # Set Bot Interface Actions
-        self.i = interface.Interface(
-            actions.Actions('/i/', self.api)
-        )
-        
-        ##########################################################################################################################
-        
-        # Add On-Reply Action
-        self.i.add('on_reply')(
-            self.wapp.__reply__.__execute__
-        )
-        
-        # Add Action Send
-        @self.add('send_msg')
-        def __send__(req: Request, res: Response) -> Response:
-            data = self.bot.send(
-                req['to'] if 'to' in req else None,
-                req['text'] if 'text' in req else None,
-                req['log'] if 'log' in req else None,
-                req['quote_id'] if 'quote_id' in req else None
-            )
-            return res(
-                json=json.dumps(data),
-                mimetype='application/json',
-                status=200
-            )
+        self.network = network.NetworkWapp(self)
+
+        # Set Bot Info
+        self.hostd = None
     
-    ##########################################################################################################################
-    #                                                       BOT METHODS                                                      #
     ##########################################################################################################################
 
     @property
@@ -104,12 +69,10 @@ class Bot:
     Wapp = Wapp
     Message = Wapp.Message
     Reply = Wapp.Reply
-    
+
     ##########################################################################################################################
-    
-    # Keep Alive
-    def keepalive(self):
-        return py_misc.keepalive()
+    #                                                       BOT METHODS                                                      #
+    ##########################################################################################################################
     
     # Logging
     def log(
@@ -127,32 +90,29 @@ class Bot:
     # MySQL Connection
     def sqlconn(self, mysqlconn: py_misc.MySQL):
         return self.sql.sqlconn(mysqlconn)
-        
-    ##########################################################################################################################
-        
-    # Set Port
-    def port(self, port: int):
-        self.api.port(port)
-        return self
-    
-    # Set User
-    def user(self, user: str):
-        return self.actions.user(user)
 
-    # Set Pasword
-    def password(self, password: str):
-        return self.actions.password(password)
-    
+    # Keep Alive
+    def keepalive(self):
+        return py_misc.keepalive()
+        
     ##########################################################################################################################
-    
-    def target(self):
-        return self.wapp.__target__
-    
-    ##########################################################################################################################
+
+    # Set Target
+    def setTarget(
+        self, 
+        target: dict[str, str],
+        isref: bool = False
+    ):
+        return self.wapp.setTarget(
+            target=target,
+            isref=isref
+        )
 
     # Add Action
-    def add(self, name: str, log: bool = True):
-        return self.actions.add(name, log)
+    def add(self, action: str):
+        return self.network.add(action)
+
+    ##########################################################################################################################
 
     # Check Request
     def check(
@@ -161,19 +121,44 @@ class Bot:
         param: str,
         clas: type | None = None
     ):
-        return self.actions.check(req, param, clas)
+        return self.actions.check(
+            req=req,
+            param=param,
+            clas=clas
+        )
+
+    ##########################################################################################################################
 
     # Send Message
     def send(
         self,
         to: str,
-        text: str,
-        log: str = 'api::send_msg',
+        text: str = None,
+        log: str = None,
         quote: str = None,
-        target: dict[str, str | dict[str, str]] = None,
-        referer: dict[str, str | dict[str, str]] = None
+        target: dict[str, str] = None,
+        referer: dict[str, str] = None
     ) -> Wapp.Message | None:
         return self.wapp.send(
+            to=to,
+            text=text,
+            log=log,
+            quote=quote,
+            target=target,
+            referer=referer
+        )
+    
+    # Send Message
+    def sends(
+        self,
+        to: str,
+        text: str = None,
+        log: str = None,
+        quote: str = None,
+        target: dict[str, str] = None,
+        referer: dict[str, str] = None
+    ) -> Wapp.Message | None:
+        return self.wapp.sends(
             to=to,
             text=text,
             log=log,
@@ -188,23 +173,20 @@ class Bot:
     def start(self):
         # Start MySQL Connection
         self.sql.start()
-        # Start Bot Server
-        if not self.api.start():
-            raise Exception('Flask Server not started')
-        # Start Interface Service
-        hostd = self.i.start(self.wapp)
-        if hostd == None:
-            raise Exception('Bot Interface not started')
+        # Assign Bot Endnode
+        self.network.assign()
+        # Get Host Device
+        hd = self.wapp.getHostDevice()
         # Update Bot Info
-        self.hostd = hostd
+        self.hd = hd
         self.chat.__replace__.update({
-            self.hostd['wid']['user'] : ''
+            (self.hd['wid']['user']) : ''
         })
-        # Get Bot-Name
-        bot_name = self.hostd['name']
-        # Log Finished
+        # Get Bot Name
+        name = self.hd['name']
+        # Log Bot Started
         py_misc.log(
-            log=f'{bot_name}::started'
+            log=f'{name}::started'
         )
 
 ##########################################################################################################################

@@ -7,7 +7,7 @@ import random
 import unidecode
 
 # Modules
-from . import wapp
+from .. import wapp
 
 ##########################################################################################################################
 #                                                   ERROR MESSAGE CLASS                                                  #

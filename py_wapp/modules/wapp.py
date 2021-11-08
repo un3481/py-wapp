@@ -2,11 +2,10 @@
 ##########################################################################################################################
 
 # Imports
-import json
 import flask
 import py_misc
 import requests
-from typing import Any, Callable
+import typing
 
 #################################################################################################################################################
 
@@ -22,16 +21,6 @@ wappType = (lambda do: Wapp if do else None)(False)
 #                                                          ACTIONS                                                       #
 ##########################################################################################################################
 
-# Get Default Target Object
-def default_target() -> dict[str, str | dict[str, str]]:
-    return dict(addr = None,
-        auth = dict(user = None, password = None)
-    )
-
-##########################################################################################################################
-#                                                          ACTIONS                                                       #
-##########################################################################################################################
-
 # Message Class
 class Message:
 
@@ -39,7 +28,7 @@ class Message:
     def __init__(
         self,
         wapp: wappType,
-        message: dict[str, Any] = None
+        message: dict[str, typing.Any] = None
     ):
         # Set Referece
         self.wapp = wapp
@@ -59,11 +48,14 @@ class Message:
             q = self.raw_data['quotedMsgObj']
             self.quoted = Message(wapp=wapp, message=q)
         except: self.quoted = None
+
+        # Nest Objects 
+        self.Trigger = MessageTrigger
         
         # Set Message-Trigger
         self.on = MessageTrigger(message=self)
-        # Nest Objects 
-        self.Trigger = MessageTrigger
+
+    ##########################################################################################################################
     
     @property
     def id(self) -> str:
@@ -84,6 +76,8 @@ class Message:
             if self.raw_data['isGroupMsg']
             else self.raw_data['from']
         )
+
+    ##########################################################################################################################
 
     # Quote Message
     def quote(
@@ -116,7 +110,10 @@ class MessageTrigger:
         return self.__message__.wapp
 
     # Reply Trigger
-    def reply(self, function: Callable[[Message], Any]):
+    def reply(
+        self,
+        function: typing.Callable[[Message], typing.Any]
+    ):
         if isinstance(self.__msg__.id, str): return function
         self.__reply__ = py_misc.call.Safe(function)
         self.wapp.__reply__.add(self.__msg__.id, self.__reply__)
@@ -134,7 +131,7 @@ class Reply:
         # Set Replyables
         self.__replyables__: dict[
             str,
-            Callable[[Message], Any]
+            typing.Callable[[Message], typing.Any]
         ] = dict()
         
         # Set Reference
@@ -144,7 +141,7 @@ class Reply:
     def add(
         self,
         id: str,
-        function: Callable[[Message], Any]
+        function: typing.Callable[[Message], typing.Any]
     ):
         # Check Parameters
         if not callable(function):
@@ -157,27 +154,21 @@ class Reply:
         return True
 
     # On Reply
-    def __execute__(self, req: Request, res: Response) -> Response:
+    def __execute__(self, req: Request):
         # Get Parameters
-        rjson = req.json
+        reqjson = req.json
         # Check Parameters
-        if not isinstance(rjson, dict): raise Exception('bad request')
-        if 'id' not in rjson: raise Exception('key "id" not valid')
-        if rjson['id'] not in self.__replyables__: raise Exception('key "id" not valid')
-        if 'reply' not in rjson: raise Exception('key "reply" not valid')
+        if not isinstance(reqjson, dict): raise Exception('bad request')
+        if 'id' not in reqjson: raise Exception('key "id" not valid')
+        if reqjson['id'] not in self.__replyables__: raise Exception('key "id" not valid')
+        if 'reply' not in reqjson: raise Exception('key "reply" not valid')
         # Get Reply
-        reply = rjson['reply']
-        id = rjson['id']
+        reply = reqjson['reply']
+        id = reqjson['id']
         # Construct Reply
         reply = Message(wapp=self.wapp, message=reply)
         # Execute Function
-        data = self.__replyables__[id](reply)
-        # Return Data
-        return res(
-            json=json.dumps(data),
-            mimetype='application/json',
-            status=200
-        )
+        return self.__replyables__[id](reply)
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -193,86 +184,127 @@ class Wapp:
         referer: dict[str, str | dict[str, str]] = None
     ):
         # Set Default Target
-        self.__target__ = default_target()
-        self.__referer__ = default_target()
+        self.__target__ = None
+        self.__referer__ = None
+
         # Default target Object
-        self.set_target(target)
-        self.set_target(referer, True)
+        self.setTarget(target)
+        self.setTarget(referer, True)
         
         # Set Reply Object
         self.__reply__ = Reply(self)
 
     ##########################################################################################################################
-    #                                                          ACTIONS                                                       #
-    ##########################################################################################################################
-     
+
     # Nest Class
     Message = Message
     Reply = Reply
 
     @property
-    def wapp(self):
-        return self
+    def wapp(self): return self
 
     ##########################################################################################################################
     #                                                          ACTIONS                                                       #
     ##########################################################################################################################
 
     # Set wapp Target
-    def set_target(
+    def setTarget(
         self,
-        target: dict[str, str | dict[str, str]],
+        target: dict[str, str],
         isref: bool = False
     ):
         # Default target Object
-        tar = default_target()
+        tar: dict[str, str] = {
+            'address': None,
+            'user': None,
+            'password': None
+        }
         
         # Set Target Function
         def _settar(t, d):
             if isinstance(t, dict):
-                if isinstance(t.get('addr'), str):
-                    d['addr'] = '' + t['addr']
-                if isinstance(t.get('auth'), dict):
-                    if isinstance(t['auth'].get('user'), str):
-                        d['auth']['user'] = '' + t['auth']['user']
-                    if isinstance(t['auth'].get('password'), str):
-                        d['auth']['password'] = '' + t['auth']['password']
+                if isinstance(t.get('address'), str):
+                    d['address'] = '' + t['address']
+                if isinstance(t.get('user'), str):
+                    d['user'] = '' + t['user']
+                if isinstance(t.get('password'), str):
+                    d['password'] = '' + t['password']
             return d
         
         # Set New Properties
-        def _assign(t):
+        def assign(t):
             if isinstance(t, dict): _settar(t, tar)
             return _settar(target, tar)
     
         try: # Selector for Target or Referer
-            if not isref: self.__target__ = _assign(self.__target__)
-            else: self.__referer__ = _assign(self.__referer__)
+            if not isref: self.__target__ = assign(self.__target__)
+            else: self.__referer__ = assign(self.__referer__)
             # Return Done
             return True
         except: return False
-    
-    # Interface
+
+    ##########################################################################################################################
+    #                                                          ACTIONS                                                       #
+    ##########################################################################################################################
+
+    # Request Target
     def req(
         self,
-        json,
-        target: dict[str, str | dict[str, str]] = None
-    ) -> requests.Response:
+        action: str,
+        target: dict[str, str] = None,
+        data = None
+    ) -> typing.Any:
         # Set Default Target
-        if target == None:
+        if not isinstance(target, dict):
             target = self.__target__
-        try: # Try Request
-            r = requests.post(
-                json = json,
-                url = target['addr'],
-                auth = (
-                    target['auth']['user'],
-                    target['auth']['password']
-                )
+        # Request
+        address = target["address"]
+        res = requests.post(
+            json = data,
+            url = f'{address}/{action}',
+            auth = (
+                target['user'],
+                target['password']
             )
-        # Handle Error
-        except: return None
-        # Return Response
-        return r
+        )
+        # Check Response
+        if res == None: raise Exception('request error: (unknown)')
+        if res.status_code != 200: raise Exception(f'request error: ({res.text})')
+        # Check Response Json
+        resjson = res.json()
+        if not isinstance(resjson, dict): raise Exception('bad response')
+        if 'done' not in resjson: raise Exception('bad response')
+        # Check Status
+        if not resjson['done']:
+            if 'error' not in resjson:
+                raise Exception('target error: (unknown)')
+            else:
+                raise Exception(f'target error: ({resjson["error"]})')
+        # Check Data
+        if 'data' not in resjson: raise Exception('key "data" not found')
+        # Return Data
+        return resjson['data']
+
+    # Request Target Safe
+    def reqs(
+        self,
+        action: str,
+        target: dict[str, str] = None,
+        data = None
+    ) -> typing.Tuple[typing.Any, Exception]:
+        try: # Try Block
+            resp = self.req(
+                action=action,
+                target=target,
+                data=data
+            )
+            return (resp, None)
+        except Exception as error:
+            return (None, error)
+
+    ##########################################################################################################################
+    #                                                          ACTIONS                                                       #
+    ##########################################################################################################################
 
     # Send Message
     def send(
@@ -281,45 +313,89 @@ class Wapp:
         text: str = None,
         log: str = None,
         quote: str = None,
-        target: dict[str, str | dict[str, str]] = None,
-        referer: dict[str, str | dict[str, str]] = None
-    ):
+        target: dict[str, str] = None,
+        referer: dict[str, str] = None
+    ) -> Message:
         # Check Parameters
-        if not (isinstance(to, str)): return
-        if not (isinstance(text, str) or text == None): return
-        if not (isinstance(log, str) or log == None): return
-        if not (isinstance(quote, str) or quote == None): return
+        if not isinstance(to, str): raise Exception('argument "to" not valid')
+        if not isinstance(text, str) or text == None: raise Exception('argument "text" not valid')
+        if not isinstance(log, str) or log == None: raise Exception('argument "log" not valid')
+        if not isinstance(quote, str) or quote == None: raise Exception('argument "quote" not valid')
+
         # Get Target
-        tar = target if target != None else self.__target__
-        ref = referer if referer != None else self.__referer__ 
-        # Interface Send Message
-        sent = self.req(
-            {
-                'action': 'send_msg',
+        if not isinstance(target, dict): target = self.__target__
+        if not isinstance(referer, dict): referer = self.__referer__
+
+        # Send Message
+        (data, error) = self.reqs(
+            target=target,
+            action='send',
+            data={
                 'to': to,
                 'text': text,
                 'log': log,
                 'quote': quote,
-                'referer': ref
-            },
-            tar
+                'referer': referer
+            }
         )
-        # On Interface Error
-        if sent == None: return None
-        # Check Status Code
-        if sent.status_code != 200: return None
-        # Convert to Json
-        sent = json.loads(sent.text)
-        # Fix Errors
-        if 'done' not in sent: return None
-        if not sent['done']: return None
+        # Check Response
+        if error: raise Exception(
+            f'failed to send message: ({error})'
+        )
+
         # Construct Message
-        sent = Message(wapp=self.wapp, message=sent['data'])
-        # Logging
-        log = 'api::send_msg' if not isinstance(log, str) else log
-        py_misc.log(log=f'Sent(${log}) To(${to})')
+        sent = Message(
+            wapp=self.wapp,
+            message=data
+        )
+
+        # Log Sent Message
+        if not isinstance(log, str): log = 'bot::send'
+        py_misc.log(f'Sent(${log}) To(${to})')
+
         # Return Sent
         return sent
+
+    # Send Message Safe
+    def sends(
+        self,
+        to: str,
+        text: str = None,
+        log: str = None,
+        quote: str = None,
+        target: dict[str, str] = None,
+        referer: dict[str, str] = None
+    ) -> typing.Tuple[Message, Exception]:
+        try: # Try Block
+            data = self.send(
+                to=to,
+                text=text,
+                log=log,
+                quote=quote,
+                target=target,
+                referer=referer
+            )
+            return (data, None)
+        except Exception as error:
+            return (None, error)
+
+    ##########################################################################################################################
+    #                                                          ACTIONS                                                       #
+    ##########################################################################################################################
+
+    # Get Host Device
+    def getHostDevice(self, target: dict[str, str] = None) -> dict:
+        # Request Data
+        (data, error) = self.reqs(
+            target=target,
+            action='getHostDevice'
+        )
+        # Check Response
+        if error: raise Exception(
+            f'failed to get host device: ({error})'
+        )
+        # Return Data
+        return data
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
