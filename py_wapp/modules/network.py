@@ -59,9 +59,9 @@ class NetworkWapp:
     ##########################################################################################################################
 
     # Set Route
-    def route(self, route: str, app: py_misc.API):
+    def route(self, route: str, app: py_misc.Express):
         self.__route__ = route
-        self.__app__ = app
+        self.app = app
     
     ##########################################################################################################################
 
@@ -87,7 +87,7 @@ class NetworkWapp:
             dosafe.__logging__ = True
 
             # Set Route
-            decorator = self.__app__.route(
+            decorator = self.app.route(
                 route=f'{self.__route__}/{action}',
                 methods=['GET', 'POST']
             )
