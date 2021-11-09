@@ -7,15 +7,13 @@ import py_misc
 import requests
 import typing
 
+# Modules
+from .types import ITarget, IMessage, TExec
+
 #################################################################################################################################################
 
 Request = flask.request
 Response = flask.Response
-
-##########################################################################################################################
-
-# Wapp Type Reference
-wappType = (lambda do: Wapp if do else None)(False)
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -24,71 +22,89 @@ wappType = (lambda do: Wapp if do else None)(False)
 # Message Class
 class Message:
 
+    # Types
+    wapp: 'Wapp'
+    Trigger: typing.Type['MessageTrigger']
+    on: 'MessageTrigger'
+    raw: 'IMessage'
+
     # Init Message
     def __init__(
         self,
-        wapp: wappType,
-        message: dict[str, typing.Any] = None
+        wapp: 'Wapp',
+        message: IMessage = None
     ):
         # Set Referece
         self.wapp = wapp
-        
-        # Fix msg
-        if isinstance(message, dict):
-            self.raw_data = message
-        else: self.raw_data = {
-            'id': None,
-            'to': None,
-            'body': None,
-            'from': None,
-            'author': None,
-            'isGroupMsg': False,
-        }
-        try: # Get Quoted
-            q = self.raw_data['quotedMsgObj']
-            self.quoted = Message(wapp=wapp, message=q)
-        except: self.quoted = None
 
-        # Nest Objects 
+        # Set Trigger
         self.Trigger = MessageTrigger
         
+        # Set Raw Message
+        if isinstance(message, dict):
+            self.raw = message
+        else: self.raw = IMessage()
+
         # Set Message-Trigger
-        self.on = MessageTrigger(message=self)
+        self.on = self.Trigger(message=self)
 
     ##########################################################################################################################
     
     @property
-    def id(self) -> str:
-        return self.raw_data['id']
+    def id(self):
+        return self.raw.get('id')
     @property
-    def to(self) -> str:
-        return self.raw_data['to']
+    def to(self):
+        return self.raw.get('to')
     @property
-    def body(self) -> str:
-        return self.raw_data['body']
+    def body(self):
+        return self.raw.get('body')
     @property
-    def origin(self) -> str:
-        return self.raw_data['from']
-    @property
-    def author(self) -> str:
+    def author(self):
         return (
-            self.raw_data['author']
-            if self.raw_data['isGroupMsg']
-            else self.raw_data['from']
+            self.raw.get('author')
+            if self.raw.get('isGroupMsg')
+            else self.raw.get('from')
         )
+    @property
+    def quoted(self):
+        return (
+            Message(
+                wapp=self.wapp,
+                message=self.raw.get('quotedMsgObj')
+            )
+            if self.raw.get('quotedMsgObj')
+            else None
+        )
+    
+    ##########################################################################################################################
+
+    # Quote Message
+    def send(
+        self,
+        text: str = None,
+        log: str = None,
+        quote: str = None
+    ):
+        return self.wapp.send(
+            to=self.author,
+            text=text,
+            log=log if log else f'message({self.id})::send',
+            quote=quote
+        )
+
 
     ##########################################################################################################################
 
     # Quote Message
     def quote(
         self,
-        text: str,
-        log: str = 'api::quote_msg'
+        text: str = None,
+        log: str = None
     ):
-        return self.wapp.send(
-            to=self.author,
+        return self.send(
             text=text,
-            log=log,
+            log=log if log else f'message({self.id})::quote',
             quote=self.id
         )
 
@@ -102,8 +118,12 @@ class MessageTrigger:
     def __init__(self, message: Message):
         # Set Message
         self.__message__ = message
+
         # Set Default Reply
-        self.__reply__ = (lambda: None)
+        self.__onReply__ = (lambda m: None)
+
+    # Reply Function
+    __onReply__: TExec
 
     @property
     def wapp(self):
@@ -112,12 +132,19 @@ class MessageTrigger:
     # Reply Trigger
     def reply(
         self,
-        function: typing.Callable[[Message], typing.Any]
+        function: TExec
     ):
-        if isinstance(self.__msg__.id, str): return function
-        self.__reply__ = py_misc.call.Safe(function)
-        self.wapp.__reply__.add(self.__msg__.id, self.__reply__)
-        return self.__reply__
+        # Check Message
+        if not isinstance(self.__message__.id, str):
+            return function
+        # Assign On-Reply Trigger
+        self.__onReply__ = py_misc.call.Safe(function)
+        self.wapp.__reply__.add(
+            id=self.__message__.id,
+            do=self.__onReply__
+        )
+        # Return Decorated Function
+        return self.__onReply__
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -127,21 +154,18 @@ class MessageTrigger:
 class Reply:
 
     # Init Reply
-    def __init__(self, wapp: wappType):
-        # Set Replyables
-        self.__replyables__: dict[
-            str,
-            typing.Callable[[Message], typing.Any]
-        ] = dict()
-        
+    def __init__(self, wapp: 'Wapp'):
         # Set Reference
         self.wapp = wapp
+
+        # Set Replyables
+        self.__replyables__: dict[str, TExec] = {}
 
     # Add Reply
     def add(
         self,
         id: str,
-        function: typing.Callable[[Message], typing.Any]
+        do: TExec
     ):
         # Check Parameters
         if not callable(function):
@@ -150,7 +174,7 @@ class Reply:
         try: del self.__replyables__[id]
         except: self.__replyables__[id] = None
         # Add to Dictionary
-        self.__replyables__[id] = py_misc.call.Safe(function)
+        self.__replyables__[id] = py_misc.call.Safe(do)
         return True
 
     # On Reply
@@ -180,16 +204,16 @@ class Wapp:
     # Init Message
     def __init__(
         self,
-        target: dict[str, str | dict[str, str]],
-        referer: dict[str, str | dict[str, str]] = None
+        target: ITarget,
+        referer: ITarget = None
     ):
         # Set Default Target
         self.__target__ = None
         self.__referer__ = None
 
         # Default target Object
-        self.setTarget(target)
-        self.setTarget(referer, True)
+        self.setTarget(target=target, isref=False)
+        self.setTarget(target=referer, isref=True)
         
         # Set Reply Object
         self.__reply__ = Reply(self)
@@ -199,6 +223,10 @@ class Wapp:
     # Nest Class
     Message = Message
     Reply = Reply
+
+    # Target
+    __target__: ITarget
+    __referer__: ITarget
 
     @property
     def wapp(self): return self
@@ -210,11 +238,11 @@ class Wapp:
     # Set wapp Target
     def setTarget(
         self,
-        target: dict[str, str],
+        target: ITarget,
         isref: bool = False
     ):
         # Default target Object
-        tar: dict[str, str] = {
+        tar: ITarget = {
             'address': None,
             'user': None,
             'password': None
@@ -251,7 +279,7 @@ class Wapp:
     def req(
         self,
         action: str,
-        target: dict[str, str] = None,
+        target: ITarget = None,
         data = None
     ) -> typing.Any:
         # Set Default Target
@@ -289,7 +317,7 @@ class Wapp:
     def reqs(
         self,
         action: str,
-        target: dict[str, str] = None,
+        target: ITarget = None,
         data = None
     ) -> typing.Tuple[typing.Any, Exception]:
         try: # Try Block
@@ -313,8 +341,8 @@ class Wapp:
         text: str = None,
         log: str = None,
         quote: str = None,
-        target: dict[str, str] = None,
-        referer: dict[str, str] = None
+        target: ITarget = None,
+        referer: ITarget = None
     ) -> Message:
         # Check Parameters
         if not isinstance(to, str): raise Exception('argument "to" not valid')
@@ -363,8 +391,8 @@ class Wapp:
         text: str = None,
         log: str = None,
         quote: str = None,
-        target: dict[str, str] = None,
-        referer: dict[str, str] = None
+        target: ITarget = None,
+        referer: ITarget = None
     ) -> typing.Tuple[Message, Exception]:
         try: # Try Block
             data = self.send(
@@ -384,7 +412,7 @@ class Wapp:
     ##########################################################################################################################
 
     # Get Host Device
-    def getHostDevice(self, target: dict[str, str] = None) -> dict:
+    def getHostDevice(self, target: ITarget = None) -> dict:
         # Request Data
         (data, error) = self.reqs(
             target=target,

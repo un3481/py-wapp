@@ -8,32 +8,31 @@ import inspect
 import py_misc
 import typing
 
+# Modules
+from .types import TBot, TAExec
+
 #################################################################################################################################################
 
-Request = flask.request
+Request = flask.Request
 Response = flask.Response
-
-##########################################################################################################################
-
-def getBotType():
-    from .. import Bot
-    return Bot
-
-# Bot Type Reference
-botType = (lambda do: getBotType() if do else None)(False)
 
 ##########################################################################################################################
 
 # Class Actions
 class NetworkWapp:
+
+    #Types
+    bot: 'TBot'
+    users: dict[str, str]
     
     # Init Actions
-    def __init__(self, bot: botType):
+    def __init__(self, bot: TBot):
         # Reference Bot
         self.bot = bot
+
         # Add API Execute Actions
-        self.users: dict[str, str] = dict()
-        
+        self.users = dict()
+    
     @property
     def network(self): return self
 
@@ -44,7 +43,7 @@ class NetworkWapp:
         self,
         json: dict,
         param: str,
-        clas: type | iter[type] = None
+        clas: type | typing.Tuple[type] = None
     ):
         cond = isinstance(json, dict) and isinstance(param, str) and param in json
         # Check Class
@@ -73,9 +72,7 @@ class NetworkWapp:
         
         # Decorator
         def __decorator__(
-            do: typing.Callable[
-                [Request], typing.Any
-            ]
+            do: TAExec
         ):
             # Check Parameters
             if not callable(do):
@@ -94,7 +91,7 @@ class NetworkWapp:
 
             # Apply Route
             @decorator
-            def endnode(req: Request, res: Response):
+            def endnode(req: Request, res: Response) -> Response:
                 # Execute
                 data = self.__execute__(
                     action=action,
@@ -123,9 +120,7 @@ class NetworkWapp:
     def __execute__(
         self,
         action: str,
-        do: typing.Callable[
-            [Request], typing.Any
-        ],
+        do: TAExec,
         req: Request
     ):
         try: # Try Block

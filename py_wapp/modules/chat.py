@@ -2,12 +2,12 @@
 ##########################################################################################################################
 
 # Imports
-import copy
 import random
+import datetime
 import unidecode
 
 # Modules
-from .. import wapp
+from .types import TBot, TMessage
 
 ##########################################################################################################################
 #                                                   ERROR MESSAGE CLASS                                                  #
@@ -15,9 +15,13 @@ from .. import wapp
 
 # Error Object
 class ErrorMessages:
+
+    # Types
+    bot: 'TBot'
+
     # Init Chat Errors
-    def __init__(self, wa: wapp.Wapp):
-        self.wapp = wa
+    def __init__(self, bot: TBot):
+        self.bot = bot
     
     @property
     def understand(self):
@@ -34,56 +38,86 @@ class ErrorMessages:
 
 # Chat Class
 class Chat:
+
+    # Types
+    bot: 'TBot'
+    error: 'ErrorMessages'
+    replace: dict[str, str]
     
     # Init Chat Class
-    def __init__(self, wa: wapp.Wapp):
+    def __init__(self, bot: TBot):
         # Set Misc Reference
-        self.wapp = wa
+        self.bot = bot
+
         # Nest Object
-        self.error = ErrorMessages(self.wapp)
+        self.error = ErrorMessages(self.bot)
+
         # Set To-Replace Dictionary
-        self.__replace__ = {
+        self.replace = {
             '  ': ' '
         }
-    
+
+    ##########################################################################################################################
+
     # Clean Message
-    def clean(self, message, lower=True):
-        # Select Actual Text
-        if isinstance(message, self.wapp.Message):
-            strin = copy.deepcopy(message.body)
-        elif isinstance(message, str):
-            strin = copy.deepcopy(message)
-        else: return False
+    def clean(
+        self,
+        message: str | TMessage,
+        lower=True
+    ) -> str:
+        # Select Text
+        if isinstance(message, str):
+            strin = f'{message}'
+        elif isinstance(message, self.bot.Message):
+            strin = f'{message.body}'
+        else: raise Exception('invalid argument "message"')
+
         # Turn to Lower-Case
         strin = strin.lower() if lower else strin
+
         # Replace All Strings in Clear Dict
-        replace = self.__replace__
-        for s in replace:
+        for s in self.replace:
             while s in strin:
-                strin = strin.replace(s, replace[s])
+                strin = strin.replace(
+                    s,
+                    self.replace[s]
+                )
+        
         # Remove Trailing Spaces
         strin = strin.strip()
+
         # Encode UTF-8
         strin = unidecode.unidecode(strin)
+
+        # Return Parsed String
         return strin
+
+    ##########################################################################################################################
     
     # Check for Affirmative
-    def yes(self, message=None):
+    def yes(
+        self,
+        message: str | TMessage = None
+    ) -> str:
         affirm = ['sim', 'positivo', 'correto', 'certo', 'isso']
-        if message == None:
-            return random.choice(affirm)
-        else:
-            return self.clean(message) in affirm
+        if message == None: return random.choice(affirm)
+        else: return self.clean(message) in affirm
     
+    ##########################################################################################################################
+
     # Check for Negative
-    def no(self, message=None):
+    def no(
+        self,
+        message: str | TMessage = None
+    ) -> str:
         neg = ['nao', 'negativo', 'errado']
-        if message == None:
-            return random.choice(neg)
+        if message == None: return random.choice(neg)
         else: return self.clean(message) in neg
     
+    ##########################################################################################################################
+
     # Get Timedelta as String
-    def timedelta(self, t):
+    def timedelta(self, t: datetime.timedelta) -> str:
         hd = t.seconds // 3600
         h = (t.days * 24) + hd
         m = (t.seconds - (hd * 3600)) // 60

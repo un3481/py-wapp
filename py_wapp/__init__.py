@@ -14,18 +14,24 @@
 ##########################################################################################################################
 
 # Imports
-import json
 import flask
+import typing
 import py_misc
 
 # Import Local Modules
 from .modules import wapp
-from .modules import sql
-from .modules import chat
 from .modules import network
+from .modules import chat
+from .modules import sql
 
-# Make Wapp Available
+# Import Types
+from .modules.types import ITarget
+
+# Reference Classes
 Wapp = wapp.Wapp
+NetworkWapp = network.NetworkWapp
+Chat = chat.Chat
+SQL = sql.SQL
 
 #################################################################################################################################################
 
@@ -39,26 +45,36 @@ Response = flask.Response
 # Bot Class
 class Bot:
 
+    # Types
+    wapp: 'Wapp'
+    network: 'NetworkWapp'
+    chat: 'Chat'
+    sql: 'SQL'
+    hd: dict
+
     # Init Bot
     def __init__(
         self,
-        target: dict[str, str],
-        referer: dict[str, str] = None
+        target: ITarget,
+        referer: ITarget = None
     ):
-        # Set Bot SQL Object
-        self.sql = sql.SQL()
-        
         # Set Bot Wapp Object
-        self.wapp = wapp.Wapp(target, referer)
-        
-        # Set Bot Chat Object
-        self.chat = chat.Chat(self)
+        self.wapp = Wapp(
+            target=target,
+            referer=referer
+        )
 
         # Set Bot Actions
-        self.network = network.NetworkWapp(self)
+        self.network = NetworkWapp(self)
+        
+        # Set Bot Chat Object
+        self.chat = Chat(self)
+
+        # Set Bot SQL Object
+        self.sql = SQL(self)
 
         # Set Bot Info
-        self.hostd = None
+        self.hd = None
     
     ##########################################################################################################################
 
@@ -69,6 +85,7 @@ class Bot:
     Wapp = Wapp
     Message = Wapp.Message
     Reply = Wapp.Reply
+    NetworkWapp = NetworkWapp
 
     ##########################################################################################################################
     #                                                       BOT METHODS                                                      #
@@ -100,7 +117,7 @@ class Bot:
     # Set Target
     def setTarget(
         self, 
-        target: dict[str, str],
+        target: ITarget,
         isref: bool = False
     ):
         return self.wapp.setTarget(
@@ -117,12 +134,12 @@ class Bot:
     # Check Request
     def check(
         self,
-        req: dict,
+        json: dict,
         param: str,
-        clas: type | None = None
+        clas: type | typing.Tuple[type] = None
     ):
-        return self.actions.check(
-            req=req,
+        return self.network.check(
+            json=json,
             param=param,
             clas=clas
         )
@@ -136,8 +153,8 @@ class Bot:
         text: str = None,
         log: str = None,
         quote: str = None,
-        target: dict[str, str] = None,
-        referer: dict[str, str] = None
+        target: ITarget = None,
+        referer: ITarget = None
     ) -> Wapp.Message | None:
         return self.wapp.send(
             to=to,
@@ -155,8 +172,8 @@ class Bot:
         text: str = None,
         log: str = None,
         quote: str = None,
-        target: dict[str, str] = None,
-        referer: dict[str, str] = None
+        target: ITarget = None,
+        referer: ITarget = None
     ) -> Wapp.Message | None:
         return self.wapp.sends(
             to=to,
@@ -179,7 +196,7 @@ class Bot:
         hd = self.wapp.getHostDevice()
         # Update Bot Info
         self.hd = hd
-        self.chat.__replace__.update({
+        self.chat.replace.update({
             (self.hd['wid']['user']) : ''
         })
         # Get Bot Name

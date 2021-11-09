@@ -1,7 +1,11 @@
 
 ##########################################################################################################################
 
+# Imports
 import py_misc
+
+# Modules
+from .types import TBot
 
 ##########################################################################################################################
 #                                                            SQL                                                         #
@@ -10,8 +14,14 @@ import py_misc
 # SQL Class
 class SQL:
 
+    # Types
+    bot: TBot
+    __conn__: bool
+
     # Init SQL
-    def __init__(self):
+    def __init__(self, bot: TBot):
+        # Refrence Bot
+        self.bot = bot
         # Set Connection Status Object
         self.__conn__ = None
     
@@ -33,14 +43,16 @@ class SQL:
                 l1 = 'Connection with MySQL Established'
                 l2 = 'No Connection with MySQL'
                 log = l1 if conn else l2
-                py_misc.log(log=log)
+                self.bot.log(log=log)
             return self.__conn__
         except: return False
     
     # Start MySQL Connection
     def start(self):
         # Check Link Cyclically
-        py_misc.schedule.each.one.second.do(self.__link__)
+        py_misc.schedule.each.five.seconds.do(
+            self.__link__
+        )
         # Return Done
         return True
             
