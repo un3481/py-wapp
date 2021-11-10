@@ -346,9 +346,9 @@ class Wapp:
     ) -> Message:
         # Check Parameters
         if not isinstance(to, str): raise Exception('argument "to" not valid')
-        if not isinstance(text, str) or text == None: raise Exception('argument "text" not valid')
-        if not isinstance(log, str) or log == None: raise Exception('argument "log" not valid')
-        if not isinstance(quote, str) or quote == None: raise Exception('argument "quote" not valid')
+        if not isinstance(text, str) and text != None: raise Exception('argument "text" not valid')
+        if not isinstance(log, str) and log != None: raise Exception('argument "log" not valid')
+        if not isinstance(quote, str) and quote != None: raise Exception('argument "quote" not valid')
 
         # Get Target
         if not isinstance(target, dict): target = self.__target__
