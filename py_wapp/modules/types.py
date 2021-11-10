@@ -15,9 +15,9 @@ def TypeOfBot():
 
 # Bot Type Reference
 TBot = (lambda do: TypeOfBot() if do else None)(False)
-TWapp = TBot.Wapp
-TMessage = TWapp.Message
-TReply = TWapp.Reply
+TWapp = TBot.Wapp if TBot != None else None
+TMessage = TWapp.Message if TWapp != None else None
+TReply = TWapp.Reply if TWapp != None else None
 
 ##########################################################################################################################
 #                                                            SQL                                                         #
