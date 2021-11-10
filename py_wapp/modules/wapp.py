@@ -297,7 +297,10 @@ class Wapp:
         )
         # Check Response
         if res == None: raise Exception('request error: (unknown)')
-        if res.status_code != 200: raise Exception(f'request error: ({res.text})')
+        try: # Check Response Status
+            res.raise_for_status()
+        except Exception as error:
+            raise Exception(f'request error: ({error})')
         # Check Response Json
         resjson = res.json()
         if not isinstance(resjson, dict): raise Exception('bad response')
