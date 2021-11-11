@@ -382,7 +382,7 @@ class Wapp:
 
         # Log Sent Message
         if not isinstance(log, str): log = 'bot::send'
-        py_misc.log(f'Sent(${log}) To(${to})')
+        py_misc.log(f'Sent({log}) To({to})')
 
         # Return Sent
         return sent
