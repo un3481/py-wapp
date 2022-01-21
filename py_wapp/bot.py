@@ -6,8 +6,8 @@ from datetime import datetime
 
 # Modules
 from .wapp import Wapp
-from .network import Network
 from .chat import Chat
+from .network import Network
 
 # Types
 from .types import ITarget

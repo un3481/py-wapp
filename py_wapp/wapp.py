@@ -3,10 +3,12 @@
 
 # Imports
 from flask import Request
-from datetime import datetime
-from py_misc.call import Safe
-from requests import post
 from typing import Type
+from datetime import datetime
+from requests import post
+from py_misc.call import Safe
+
+
 
 # Modules
 from .types import ITarget, IMessage, TExec
@@ -354,7 +356,7 @@ class Wapp:
         if not isinstance(referer, dict): referer = self.__referer__
 
         # Send Message
-        (data, error) = self.reqs(
+        (ok, data) = self.reqs(
             target=target,
             action='send',
             data={
@@ -366,8 +368,8 @@ class Wapp:
             }
         )
         # Check Response
-        if error: raise Exception(
-            f'failed to send message: ({error})'
+        if not ok: raise Exception(
+            f'failed to send message: ({data})'
         )
 
         # Construct Message
@@ -413,13 +415,13 @@ class Wapp:
     # Get Host Device
     def getHostDevice(self, target: ITarget = None) -> dict:
         # Request Data
-        (data, error) = self.reqs(
+        (ok, data) = self.reqs(
             target=target,
             action='getHostDevice'
         )
         # Check Response
-        if error: raise Exception(
-            f'failed to get host device: ({error})'
+        if not ok: raise Exception(
+            f'failed to get host device: ({data})'
         )
         # Return Data
         return data
