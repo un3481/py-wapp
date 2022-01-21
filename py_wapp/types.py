@@ -2,11 +2,9 @@
 ##########################################################################################################################
 
 # Imports
-import typing
-import flask
+from flask import Request
+from typing import TypedDict, Callable, Optional, Any
 
-##########################################################################################################################
-#                                                            SQL                                                         #
 ##########################################################################################################################
 
 def TypeOfBot():
@@ -20,11 +18,9 @@ TMessage = TWapp.Message if TWapp != None else None
 TReply = TWapp.Reply if TWapp != None else None
 
 ##########################################################################################################################
-#                                                            SQL                                                         #
-##########################################################################################################################
 
 # Target Type
-class ITarget(typing.TypedDict):
+class ITarget(TypedDict):
     address: str
     user: str
     password: str
@@ -32,7 +28,7 @@ class ITarget(typing.TypedDict):
 ##########################################################################################################################
 
 # Message Reserved Type
-IReservedMessage = typing.TypedDict(
+IReservedMessage = TypedDict(
     'IReservedMessage',
     { 'from': str }
 )
@@ -44,16 +40,14 @@ class IMessage(IReservedMessage):
     body: str
     author: str
     isGroupMsg: str
-    quotedMsgObj: typing.Optional['IMessage']
+    quotedMsgObj: Optional['IMessage']
 
 ##########################################################################################################################
 
 # Execute Type
-TExec = typing.Callable[[IMessage], typing.Any]
+TExec = Callable[[IMessage], Any]
 
 # Execute Action Type
-TAExec = typing.Callable[[flask.Request], typing.Any]
+TAExec = Callable[[Request], Any]
 
-##########################################################################################################################
-#                                                            SQL                                                         #
 ##########################################################################################################################

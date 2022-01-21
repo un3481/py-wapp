@@ -4,18 +4,17 @@ from distutils.core import setup
 
 setup(
     name='py_wapp',
-    version='2.0.7',
+    version='2.1.0',
     license='MIT',
     description='HTTP Rest API for Whatsapp Bot',
     author='anthony',
-    url='https://github.com/anthony-freitas/py-wapp',
+    url='https://github.com/melon-yellow/py-wapp',
     packages=[
-        'py_wapp',
-        'py_wapp/modules'
+        'py_wapp'
     ],
     install_requires=[
-        'py_misc @ git+https://github.com/anthony-freitas/py-misc#egg=py-misc',
+        'requests',
         'unidecode',
-        'requests'
+        'py_misc @ git+https://github.com/melon-yellow/py-misc#egg=py-misc' 
     ]
 )

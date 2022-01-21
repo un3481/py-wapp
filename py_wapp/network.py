@@ -2,24 +2,19 @@
 ##########################################################################################################################
 
 # Imports
-import json
-import flask
-import inspect
-import py_misc
-import typing
+from json import loads, dumps
+from inspect import isclass
+from flask import Request, Response
+from py_misc.express import Express
+from py_misc.call import Safe
 
 # Modules
 from .types import TBot, TAExec
 
-#################################################################################################################################################
-
-Request = flask.Request
-Response = flask.Response
-
 ##########################################################################################################################
 
 # Class Actions
-class NetworkWapp:
+class Network:
 
     #Types
     bot: 'TBot'
@@ -43,11 +38,11 @@ class NetworkWapp:
         self,
         json: dict,
         param: str,
-        clas: type | typing.Tuple[type] = None
+        clas: type | tuple[type] = None
     ):
         cond = isinstance(json, dict) and isinstance(param, str) and param in json
         # Check Class
-        if cond and inspect.isclass(clas):
+        if cond and isclass(clas):
             try:  # Check for Iterable
                 iter(clas)
                 cond = any(isinstance(json[param], c) for c in clas)
@@ -58,7 +53,7 @@ class NetworkWapp:
     ##########################################################################################################################
 
     # Set Route
-    def route(self, route: str, app: py_misc.Express):
+    def route(self, route: str, app: Express):
         self.__route__ = route
         self.app = app
     
@@ -71,24 +66,19 @@ class NetworkWapp:
         if len(action) == 0: raise Exception('argument "action" not valid')
         
         # Decorator
-        def __decorator__(
-            do: TAExec
-        ):
+        def __decorator__(do: TAExec):
             # Check Parameters
             if not callable(do):
                 raise Exception('argument "do" not valid')
-
             # Set Caller
-            dosafe = py_misc.call.Safe(do)
+            dosafe = Safe(do)
             dosafe.__name__ = action
             dosafe.__logging__ = True
-
             # Set Route
             decorator = self.app.route(
                 route=f'{self.__route__}/{action}',
                 methods=['GET', 'POST']
             )
-
             # Apply Route
             @decorator
             def endnode(req: Request, res: Response) -> Response:
@@ -100,14 +90,12 @@ class NetworkWapp:
                 )
                 # Return Reponse
                 return res(
-                    json.dumps(data),
+                    dumps(data),
                     mimetype='application/json',
                     status=200
                 )
-            
             # Set Authentication
             endnode.users.update(self.users)
-
             # Return Function
             return endnode
         
@@ -125,29 +113,23 @@ class NetworkWapp:
     ):
         try: # Try Block
             ip = self.__api__.flask.request.remote_addr
-            py_misc.log(f'Exec(network::{action}) From({ip})')
+            print(f'Exec(network::{action}) From({ip})')
             # Execute Action
             data = do(req)
             # Serialize
-            serialize = lambda d: json.loads(json.dumps(d))
+            serialize = lambda d: loads(dumps(d))
             try: # Make Serializable
                 try: data = serialize(data)
                 except: data = serialize(data.__dict__)
             except: data = None
             # Return Data
-            return {
-                'done': True, 
-                'data': data
-            }
+            return {'ok': True, 'data': data}
         # If Error Occurred
         except Exception as error:
             # Log Error
-            py_misc.log(f'Throw(network::{action}) Catch({error})')
+            print(f'Throw(network::{action}) Catch({error})')
             # Return Error
-            return {
-                'done': False,
-                'error': str(error)
-            }
+            return {'ok': False, 'error': f'{error}'}
 
     ##########################################################################################################################
     

@@ -2,18 +2,14 @@
 ##########################################################################################################################
 
 # Imports
-import flask
-import py_misc
-import requests
-import typing
+from flask import Request
+from datetime import datetime
+from py_misc.call import Safe
+from requests import post
+from typing import Type
 
 # Modules
 from .types import ITarget, IMessage, TExec
-
-#################################################################################################################################################
-
-Request = flask.request
-Response = flask.Response
 
 ##########################################################################################################################
 #                                                          ACTIONS                                                       #
@@ -24,7 +20,7 @@ class Message:
 
     # Types
     wapp: 'Wapp'
-    Trigger: typing.Type['MessageTrigger']
+    Trigger: Type['MessageTrigger']
     on: 'MessageTrigger'
     raw: 'IMessage'
 
@@ -138,7 +134,7 @@ class MessageTrigger:
         if not isinstance(self.__message__.id, str):
             return function
         # Assign On-Reply Trigger
-        self.__onReply__ = py_misc.call.Safe(function)
+        self.__onReply__ = Safe(function)
         self.wapp.__reply__.add(
             id=self.__message__.id,
             do=self.__onReply__
@@ -174,7 +170,7 @@ class Reply:
         try: del self.__replyables__[id]
         except: self.__replyables__[id] = None
         # Add to Dictionary
-        self.__replyables__[id] = py_misc.call.Safe(do)
+        self.__replyables__[id] = Safe(do)
         return True
 
     # On Reply
@@ -281,13 +277,13 @@ class Wapp:
         action: str,
         target: ITarget = None,
         data = None
-    ) -> typing.Any:
+    ):
         # Set Default Target
         if not isinstance(target, dict):
             target = self.__target__
         # Request
         address = target["address"]
-        res = requests.post(
+        res = post(
             json = data,
             url = f'{address}/{action}',
             auth = (
@@ -302,19 +298,19 @@ class Wapp:
         except Exception as error:
             raise Exception(f'request error: ({error})')
         # Check Response Json
-        resjson = res.json()
-        if not isinstance(resjson, dict): raise Exception('bad response')
-        if 'done' not in resjson: raise Exception('bad response')
+        json = res.json()
+        if not isinstance(json, dict): raise Exception('bad response')
+        if 'ok' not in json: raise Exception('bad response')
         # Check Status
-        if not resjson['done']:
-            if 'error' not in resjson:
+        if not json['ok']:
+            if 'error' not in json:
                 raise Exception('target error: (unknown)')
             else:
-                raise Exception(f'target error: ({resjson["error"]})')
+                raise Exception(f'target error: ({json["error"]})')
         # Check Data
-        if 'data' not in resjson: raise Exception('key "data" not found')
+        if 'data' not in json: raise Exception('key "data" not found')
         # Return Data
-        return resjson['data']
+        return json['data']
 
     # Request Target Safe
     def reqs(
@@ -322,16 +318,16 @@ class Wapp:
         action: str,
         target: ITarget = None,
         data = None
-    ) -> typing.Tuple[typing.Any, Exception]:
+    ):
         try: # Try Block
-            resp = self.req(
+            res = self.req(
                 action=action,
                 target=target,
                 data=data
             )
-            return (resp, None)
+            return (True, res)
         except Exception as error:
-            return (None, error)
+            return (False, error)
 
     ##########################################################################################################################
     #                                                          ACTIONS                                                       #
@@ -382,7 +378,7 @@ class Wapp:
 
         # Log Sent Message
         if not isinstance(log, str): log = 'bot::send'
-        py_misc.log(f'Sent({log}) To({to})')
+        print(f'({datetime.now()}) Sent({log}) To({to})')
 
         # Return Sent
         return sent
@@ -396,7 +392,7 @@ class Wapp:
         quote: str = None,
         target: ITarget = None,
         referer: ITarget = None
-    ) -> typing.Tuple[Message, Exception]:
+    ):
         try: # Try Block
             data = self.send(
                 to=to,
@@ -406,9 +402,9 @@ class Wapp:
                 target=target,
                 referer=referer
             )
-            return (data, None)
+            return (True, data)
         except Exception as error:
-            return (None, error)
+            return (False, error)
 
     ##########################################################################################################################
     #                                                          ACTIONS                                                       #

@@ -2,9 +2,9 @@
 ##########################################################################################################################
 
 # Imports
-import random
-import datetime
-import unidecode
+from random import choice
+from datetime import timedelta
+from unidecode import unidecode
 
 # Modules
 from .types import TBot, TMessage
@@ -30,7 +30,7 @@ class ErrorMessages:
             'Sinceramente não entendi o que você falou.',
             'Não fui capaz de interpretar o que você disse.',
         ]
-        return random.choice(p)
+        return choice(p)
 
 ##########################################################################################################################
 #                                                      CHAT CLASS                                                        #
@@ -87,7 +87,7 @@ class Chat:
         strin = strin.strip()
 
         # Encode UTF-8
-        strin = unidecode.unidecode(strin)
+        strin = unidecode(strin)
 
         # Return Parsed String
         return strin
@@ -100,7 +100,7 @@ class Chat:
         message: str | TMessage = None
     ) -> str:
         affirm = ['sim', 'positivo', 'correto', 'certo', 'isso']
-        if message == None: return random.choice(affirm)
+        if message == None: return choice(affirm)
         else: return self.clean(message) in affirm
     
     ##########################################################################################################################
@@ -111,13 +111,13 @@ class Chat:
         message: str | TMessage = None
     ) -> str:
         neg = ['nao', 'negativo', 'errado']
-        if message == None: return random.choice(neg)
+        if message == None: return choice(neg)
         else: return self.clean(message) in neg
     
     ##########################################################################################################################
 
     # Get Timedelta as String
-    def timedelta(self, t: datetime.timedelta) -> str:
+    def timedelta(self, t: timedelta) -> str:
         hd = t.seconds // 3600
         h = (t.days * 24) + hd
         m = (t.seconds - (hd * 3600)) // 60
