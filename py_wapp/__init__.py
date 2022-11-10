@@ -7,7 +7,7 @@
 #                                          Multi-language API for Whatsapp Bot                                           #
 #                                 ---------------- Python3 -- NodeJS ----------------                                    #
 #                                                * Under Development *                                                   #
-#                                       https://github.com/melon-yellow/py-wapp                                          #
+#                                          https://github.com/un3481/py-wapp                                             #
 #                                                                                                                        #
 ##########################################################################################################################
 #                                                      MAIN CODE                                                         #
