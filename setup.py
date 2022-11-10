@@ -15,6 +15,6 @@ setup(
     install_requires=[
         'requests',
         'unidecode',
-        'py_misc @ git+https://github.com/melon-yellow/py-misc#egg=py-misc' 
+        'py_misc @ git+https://github.com/un3481/py-misc#egg=py-misc' 
     ]
 )
