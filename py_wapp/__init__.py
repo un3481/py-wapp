@@ -3,7 +3,7 @@
 #                                                       PY-WAPP                                                          #
 ##########################################################################################################################
 #                                                                                                                        #
-#                                                 Whatsapp Bot for AVB                                                   #
+#                                                     Whatsapp Bot                                                       #
 #                                          Multi-language API for Whatsapp Bot                                           #
 #                                 ---------------- Python3 -- NodeJS ----------------                                    #
 #                                                * Under Development *                                                   #
