@@ -1,8 +1,28 @@
 
 ##########################################################################################################################
 
+# Import
+from typing import TypedDict, Optional
+
 # Modules
-from .common import TWapp, IMessage, TExec
+from .common import TWapp, TExec
+
+##########################################################################################################################
+
+# Message Reserved Type
+IReservedMessage = TypedDict(
+    'IReservedMessage',
+    { 'from': str }
+)
+
+# Message Type
+class IMessage(IReservedMessage):
+    id: str
+    to: str
+    body: str
+    author: str
+    isGroupMsg: str
+    quotedMsgObj: Optional['IMessage']
 
 ##########################################################################################################################
 

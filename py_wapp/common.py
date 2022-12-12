@@ -3,53 +3,58 @@
 
 # Imports
 from flask import Request
-from typing import TypedDict, Callable, Optional, Any
+from typing import Callable, Any
+
+##########################################################################################################################
+
+# Execute Type
+TExec = Callable[['IMessage'], Any]
+
+# Execute Action Type
+TAExec = Callable[[Request], Any]
 
 ##########################################################################################################################
 
 def _wapp(cond):
     if cond: raise Exception()
-    from . import Wapp
+    from .wapp import Wapp
     return Wapp
 
 # Bot Type Reference
 try: TWapp = (lambda: _wapp(True))()
 except: None
 
-TMessage = TWapp.Message if TWapp != None else None
-TReply = TWapp.Reply if TWapp != None else None
+##########################################################################################################################
+
+def _message(cond):
+    if cond: raise Exception()
+    from .message import Message
+    return Message
+
+# Bot Type Reference
+try: TMessage = (lambda: _message(True))()
+except: None
 
 ##########################################################################################################################
 
-# Target Type
-class ITarget(TypedDict):
-    address: str
-    user: str
-    password: str
+def _imessage(cond):
+    if cond: raise Exception()
+    from .message import IMessage
+    return IMessage
+
+# Bot Type Reference
+try: IMessage = (lambda: _imessage(True))()
+except: None
 
 ##########################################################################################################################
 
-# Message Reserved Type
-IReservedMessage = TypedDict(
-    'IReservedMessage',
-    { 'from': str }
-)
+def _reply(cond):
+    if cond: raise Exception()
+    from .reply import Reply
+    return Reply
 
-# Message Type
-class IMessage(IReservedMessage):
-    id: str
-    to: str
-    body: str
-    author: str
-    isGroupMsg: str
-    quotedMsgObj: Optional['IMessage']
-
-##########################################################################################################################
-
-# Execute Type
-TExec = Callable[[IMessage], Any]
-
-# Execute Action Type
-TAExec = Callable[[Request], Any]
+# Bot Type Reference
+try: TReply = (lambda: _reply(True))()
+except: None
 
 ##########################################################################################################################

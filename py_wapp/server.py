@@ -2,7 +2,6 @@
 ##########################################################################################################################
 
 # Imports
-from inspect import isclass
 from json import loads, dumps
 from flask import Flask, request, Request, Response
 from flask_httpauth import HTTPBasicAuth

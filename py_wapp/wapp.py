@@ -4,11 +4,19 @@
 # Imports
 from requests import post
 from datetime import datetime
+from typing import TypedDict
 
 # Modules
-from .common import ITarget
 from .message import Message
 from .reply import Reply
+
+##########################################################################################################################
+
+# Target Type
+class ITarget(TypedDict):
+    address: str
+    user: str
+    password: str
 
 ##########################################################################################################################
 
