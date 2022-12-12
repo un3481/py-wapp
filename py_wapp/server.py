@@ -48,18 +48,16 @@ class Server:
         req: Request
     ):
         try:
-            ip = request.remote_addr
+            ip = req.remote_addr
             print(f'Exec(network::{action}) From({ip})')
             
             # Execute Action
             data = do(req)
             
             # Serialize
-            serialize = lambda d: loads(dumps(d))
-            
-            try: # Make Serializable
-                try: data = serialize(data)
-                except: data = serialize(data.__dict__)
+            try:
+                try: data = loads(dumps(data))
+                except: data = loads(dumps(data.__dict__))
             except: data = None
             
             # Return Data
@@ -80,7 +78,7 @@ class Server:
         # Route
         @app.route(f'{route}/host_device', methods=['GET'])
         @self.auth.login_required
-        def get_host_device():
+        def host_device():
             data = self.__execute__(
                 req=request,
                 action='get_host_device',
@@ -116,7 +114,7 @@ class Server:
     # Route POST -> Send
     def route_post_send(self, route: str, app: Flask):
         # Send Function
-        def __send__(req: Request):
+        def _send(req: Request):
             # Get Input
             reqjson = req.json
             # Check Request
@@ -137,7 +135,7 @@ class Server:
             data = self.__execute__(
                 req=request,
                 action='send',
-                do=__send__,
+                do=_send,
             )
             return Response(
                 dumps(data),
