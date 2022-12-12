@@ -7,13 +7,15 @@ from typing import TypedDict, Callable, Optional, Any
 
 ##########################################################################################################################
 
-def TypeOfBot():
-    from .. import Bot
-    return Bot
+def _wapp(cond):
+    if cond: raise Exception()
+    from . import Wapp
+    return Wapp
 
 # Bot Type Reference
-TBot = (lambda do: TypeOfBot() if do else None)(False)
-TWapp = TBot.Wapp if TBot != None else None
+try: TWapp = (lambda: _wapp(True))()
+except: None
+
 TMessage = TWapp.Message if TWapp != None else None
 TReply = TWapp.Reply if TWapp != None else None
 
