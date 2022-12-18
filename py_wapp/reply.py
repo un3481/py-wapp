@@ -14,7 +14,7 @@ from .message import Message
 class Reply:
     
     wapp: 'TWapp'
-    __repliables__: dict[str, 'TExec']
+    repliables: dict[str, 'TExec']
     
     ##########################################################################################################################
 
@@ -24,12 +24,12 @@ class Reply:
         self.wapp = wapp
 
         # Set Repliables
-        self.__repliables__: dict[str, 'TExec'] = {}
+        self.repliables: dict[str, 'TExec'] = {}
     
     ##########################################################################################################################
 
-    # Add Reply
-    def add(
+    # Add On-Reply Trigger
+    def on_reply(
         self,
         id: str,
         do: 'TExec'
@@ -37,9 +37,9 @@ class Reply:
         # Check Parameters
         if not callable(function): return False
         
-        # Delete Old Replyable
-        try: del self.__repliables__[id]
-        except: self.__repliables__[id] = None
+        # Delete Old Repliable
+        try: del self.repliables[id]
+        except: self.repliables[id] = None
         
         def repliable(m: Message):
             try:
@@ -48,20 +48,20 @@ class Reply:
                 return False, error
         
         # Add to Dictionary
-        self.__repliables__[id] = repliable
+        self.repliables[id] = repliable
         return True
     
     ##########################################################################################################################
 
-    # On Reply
-    def __execute__(self, req: Request):
+    # Run On-Reply Trigger
+    def run_on_reply(self, req: Request):
         # Get Parameters
         reqjson = req.json
         
         # Check Parameters
         if not isinstance(reqjson, dict): raise Exception('bad request')
         if 'id' not in reqjson: raise Exception('key "id" not valid')
-        if reqjson['id'] not in self.__repliables__: raise Exception('key "id" not valid')
+        if reqjson['id'] not in self.repliables: raise Exception('key "id" not valid')
         if 'reply' not in reqjson: raise Exception('key "reply" not valid')
         
         # Get Reply
@@ -72,6 +72,6 @@ class Reply:
         reply = Message(wapp=self.wapp, message=reply)
         
         # Execute Function
-        return self.__repliables__[id](reply)
+        return self.repliables[id](reply)
     
 ##########################################################################################################################

@@ -2,7 +2,7 @@
 ##########################################################################################################################
 
 # Import
-from typing import TypedDict, Optional
+from typing import TypedDict
 
 # Modules
 from .common import TWapp, TExec
@@ -17,12 +17,11 @@ IReservedMessage = TypedDict(
 
 # Message Type
 class IMessage(IReservedMessage):
-    id: str
+    id: dict[str, str]
     to: str
     body: str
     author: str
-    isGroupMsg: str
-    quotedMsgObj: Optional['IMessage']
+    hasQuotedMsg: bool
 
 ##########################################################################################################################
 
@@ -35,7 +34,7 @@ class Message:
 
     @property
     def id(self):
-        return self.raw.get('id')
+        return self.raw.get('id').get('_serialized')
     @property
     def to(self):
         return self.raw.get('to')
@@ -46,19 +45,10 @@ class Message:
     def author(self):
         return (
             self.raw.get('author')
-            if self.raw.get('isGroupMsg')
+            if self.raw.get('author')
             else self.raw.get('from')
         )
-    @property
-    def quoted(self):
-        return (
-            Message(
-                wapp=self.wapp,
-                message=self.raw.get('quotedMsgObj')
-            )
-            if self.raw.get('quotedMsgObj')
-            else None
-        )
+
     
     ##########################################################################################################################
     
@@ -79,34 +69,35 @@ class Message:
         # Set Message-Trigger
         self.on = MessageTrigger(message=self)
 
+
     ##########################################################################################################################
 
-    # Quote Message
-    def send(
+    # Get Quoted Message
+    def get_quoted_message(self):
+        if self.raw.get('hasQuotedMsg'):
+            return self.wapp.get_message(
+                chat_id=self.raw.get('chatId'),
+                id=self.id
+            )
+        else: return None
+
+    ##########################################################################################################################
+
+    # Reply Message
+    def reply(
         self,
-        text: str = None,
+        content: str = None,
         log: str = None,
-        quote: str = None
+        options: dict[str, any] = None
     ):
         return self.wapp.send(
             to=self.author,
-            text=text,
+            content=content,
             log=log if log else f'message({self.id})::send',
-            quote=quote
-        )
-
-    ##########################################################################################################################
-
-    # Quote Message
-    def quote(
-        self,
-        text: str = None,
-        log: str = None
-    ):
-        return self.send(
-            text=text,
-            log=log if log else f'message({self.id})::quote',
-            quote=self.id
+            options=dict.update(
+                { 'quotedMessageId': self.id },
+                options
+            )
         )
 
 ##########################################################################################################################
@@ -114,46 +105,50 @@ class Message:
 # Message-Trigger
 class MessageTrigger:
     
-    __message__: 'Message'
-    __on_reply__: 'TExec'
+    message: 'Message'
+    on_reply: 'TExec'
     
     @property
     def wapp(self):
-        return self.__message__.wapp
+        return self.message.wapp
 
     ##########################################################################################################################
 
     def __init__(self, message: 'Message'):
         # Set Message
-        self.__message__ = message
+        self.message = message
 
         # Set Default Reply
-        self.__on_reply__ = (lambda m: None)
+        self.on_reply = (lambda m: None)
 
     ##########################################################################################################################
 
     # Reply Trigger
     def reply(
         self,
-        function: TExec
+        fun: TExec
     ):
         # Check Message
-        if not isinstance(self.__message__.id, str):
-            return function
+        if not isinstance(self.message.id, str):
+            return fun
         
-        def on_reply(m: Message):
+        # Define Safe Wrapper
+        def wrapper(m: Message):
             try:
-                return True, function(m)
+                return True, fun(m)
             except Exception as error:
                 return False, error
         
+        # Store Function
+        self.on_reply = wrapper
+        
         # Assign On-Reply Trigger
-        self.__on_reply__ = on_reply
-        self.wapp.__reply__.add(
-            id=self.__message__.id,
-            do=self.__on_reply__
+        self.wapp.reply.on_reply(
+            id=self.message.id,
+            do=self.on_reply
         )
+        
         # Return Decorated Function
-        return self.__on_reply__
+        return self.on_reply
 
 ##########################################################################################################################
