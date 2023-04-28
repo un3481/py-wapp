@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name='py_wapp',
-    version='2.2.0',
+    version='2.4.0',
     license='MIT',
     description='Python client for ts-wapp.js',
     author='anthony',
