@@ -74,7 +74,7 @@ class Server:
     ##########################################################################################################################
     
     # Route GET -> Host Device
-    def route_host_device(self, route: str, app: Flask):
+    def route_get_host_device(self, route: str, app: Flask):
         # Route
         @app.route(f'{route}/host_device', methods=['GET'])
         @self.auth.login_required
@@ -92,23 +92,23 @@ class Server:
             
     ##########################################################################################################################
     
-    # Route GET -> Host Device
+    # Route GET -> Message
     def route_get_message(self, route: str, app: Flask):
         # Get Message Function
         def do_get_mesage(req: Request):
             # Get Input
-            reqjson = req.json
+            reqargs = req.args
             # Check Request
-            if not isinstance(reqjson, dict):
+            if not isinstance(reqargs, dict):
                 raise Exception('bad request')
             # Send Message
             return self.wapp.get_message(
-                chat_id=reqjson.get('chat_id'),
-                id=reqjson.get('id')
+                chat_id=reqargs.get('chat_id'),
+                id=reqargs.get('id')
             )
         
         # Route
-        @app.route(f'{route}/get_message', methods=['POST'])
+        @app.route(f'{route}/message', methods=['GET'])
         @self.auth.login_required
         def get_message():
             data = self.run_on_request(
@@ -121,15 +121,13 @@ class Server:
                 mimetype='application/json',
                 status=200
             )
-        
 
-            
     ##########################################################################################################################
     
-    # Route POST -> Send
-    def route_send(self, route: str, app: Flask):
+    # Route POST -> Message
+    def route_post_message(self, route: str, app: Flask):
         # Send Function
-        def do_send(req: Request):
+        def do_post_message(req: Request):
             # Get Input
             reqjson = req.json
             # Check Request
@@ -148,24 +146,24 @@ class Server:
                 # Add On-Reply Trigger
                 if isinstance(referer, dict):
                     sent.on.reply(
-                        lambda m: self.wapp.req(
-                            action='on_reply',
+                        lambda m: self.wapp.remote.post(
+                            action='reply',
                             data=m,
                             target=referer
                         )
                     )
-                return [True, sent]
+                return (True, sent)
             else:
-                return [False, sent]
+                return (False, sent)
         
         # Route
-        @app.route(f'{route}/send', methods=['POST'])
+        @app.route(f'{route}/message', methods=['POST'])
         @self.auth.login_required
-        def send():
+        def post_message():
             data = self.run_on_request(
                 req=request,
-                action='send',
-                do=do_send,
+                action='post_message',
+                do=do_post_message,
             )
             return Response(
                 dumps(data),
@@ -175,15 +173,15 @@ class Server:
 
     ##########################################################################################################################
     
-    # Route POST -> On Reply
-    def route_on_reply(self, route: str, app: Flask):
+    # Route POST -> Reply
+    def route_post_reply(self, route: str, app: Flask):
         # Route
-        @app.route(f'{route}/on_reply', methods=['POST'])
+        @app.route(f'{route}/reply', methods=['POST'])
         @self.auth.login_required
-        def on_reply():
+        def post_reply():
             data = self.run_on_request(
                 req=request,
-                action='on_reply',
+                action='post_reply',
                 do=(lambda r: self.wapp.reply.run_on_reply(r))
             )
             return Response(
@@ -197,10 +195,10 @@ class Server:
     # Route All endpoints
     def route(self, route: str, app: Flask):
         # Route
-        self.route_host_device(route, app)
+        self.route_get_host_device(route, app)
         self.route_get_message(route, app)
-        self.route_on_reply(route, app)
-        self.route_send(route, app)
+        self.route_post_message(route, app)
+        self.route_post_reply(route, app)
         
         # Return Done
         return True

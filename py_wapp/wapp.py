@@ -2,7 +2,7 @@
 ##########################################################################################################################
 
 # Imports
-from requests import post
+from requests import get, post, Response
 from datetime import datetime
 from typing import TypedDict
 
@@ -20,11 +20,124 @@ class ITarget(TypedDict):
 
 ##########################################################################################################################
 
+class Remote:
+        
+    wapp: 'Wapp'
+    
+    ##########################################################################################################################
+
+    # Init Request
+    def __init__(self, wapp: 'Wapp'):
+        # Set Reference
+        self.wapp = wapp
+
+    ##########################################################################################################################
+
+    # Handle Response
+    def handle_response(
+        self,
+        res: Response
+    ):
+        # Check Response
+        if res == None: raise Exception('request error: (unknown)')
+
+        try: # Check Response Status
+            res.raise_for_status()
+        except Exception as error:
+            raise Exception(f'request error: ({error})')
+
+        # Check Response Json
+        resjson = res.json()
+        if not isinstance(resjson, dict): raise Exception('bad response')
+        if 'ok' not in resjson: raise Exception('bad response')
+
+        # Check Status
+        if not resjson['ok']:
+            if 'error' not in resjson:
+                raise Exception('target error: (unknown)')
+            else:
+                raise Exception(f'target error: ({resjson["error"]})')
+
+        # Check Data
+        if 'data' not in resjson: raise Exception('key "data" not found')
+
+        # Return Data
+        return resjson['data']
+    
+    ##########################################################################################################################
+
+    # Request Target
+    def get(
+        self,
+        action: str,
+        data: dict[str, str],
+        target: 'ITarget' = None
+    ):
+        try:
+            # Set Default Target
+            if not isinstance(target, dict):
+                target = self.wapp.target
+
+            # Request
+            address = target["address"]
+            res = get(
+                url = f'{address}/{action}',
+                auth = (
+                    target['user'],
+                    target['password']
+                ),
+                params = data
+            )
+
+            # Check Response
+            data = self.handle_response(res)
+
+            # Return Data
+            return (True, data)
+        except Exception as error:
+            return (False, error)
+    
+    ##########################################################################################################################
+
+    # Request Target
+    def post(
+        self,
+        action: str,
+        data: any,
+        target: 'ITarget' = None
+    ):
+        try:
+            # Set Default Target
+            if not isinstance(target, dict):
+                target = self.wapp.target
+
+            # Request
+            address = target["address"]
+            res = post(
+                url = f'{address}/{action}',
+                auth = (
+                    target['user'],
+                    target['password']
+                ),
+                json = data
+            )
+
+            # Check Response
+            data = self.handle_response(res)
+
+            # Return Data
+            return (True, data)
+        except Exception as error:
+            return (False, error)
+    
+##########################################################################################################################
+
 # Whatsapp Class
 class Wapp:
 
     target: 'ITarget'
     referer: 'ITarget'
+    remote: 'Remote'
     reply: Reply
 
     @property
@@ -45,6 +158,9 @@ class Wapp:
         # Default target Object
         self.set_target(target=target, isref=False)
         self.set_target(target=referer, isref=True)
+        
+        # Set Remote Object
+        self.remote = Remote(self)
         
         # Set Reply Object
         self.reply = Reply(self)
@@ -89,57 +205,33 @@ class Wapp:
 
     ##########################################################################################################################
 
-    # Request Target
-    def req(
+    # Get Host Device
+    def get_host_device(self, target: 'ITarget' = None):
+        if not isinstance(target, dict): target = self.target
+        return self.remote.get(
+            target=target,
+            action='host_device',
+            data=None
+        )
+    
+    ##########################################################################################################################
+
+    # Get Message
+    def get_message(
         self,
-        action: str,
-        data: any,
+        chat_id: str,
+        id: str,
         target: 'ITarget' = None
     ):
-        try:
-            # Set Default Target
-            if not isinstance(target, dict):
-                target = self.target
-
-            # Request
-            address = target["address"]
-            res = post(
-                json = data,
-                url = f'{address}/{action}',
-                auth = (
-                    target['user'],
-                    target['password']
-                )
-            )
-
-            # Check Response
-            if res == None: raise Exception('request error: (unknown)')
-
-            try: # Check Response Status
-                res.raise_for_status()
-            except Exception as error:
-                raise Exception(f'request error: ({error})')
-
-            # Check Response Json
-            json = res.json()
-            if not isinstance(json, dict): raise Exception('bad response')
-            if 'ok' not in json: raise Exception('bad response')
-
-            # Check Status
-            if not json['ok']:
-                if 'error' not in json:
-                    raise Exception('target error: (unknown)')
-                else:
-                    raise Exception(f'target error: ({json["error"]})')
-
-            # Check Data
-            if 'data' not in json: raise Exception('key "data" not found')
-
-            # Return Data
-            return (True, json['data'])
-
-        except Exception as error:
-            return (False, error)
+        if not isinstance(target, dict): target = self.target
+        return self.remote.get(
+            target=target,
+            action='message',
+            data={
+                'chat_id': chat_id,
+                'id': id
+            }
+        )
 
     ##########################################################################################################################
 
@@ -165,9 +257,9 @@ class Wapp:
             if not isinstance(referer, dict): referer = self.referer
 
             # Send Message
-            (ok, data) = self.reqs(
+            (ok, data) = self.remote.post(
                 target=target,
-                action='send',
+                action='message',
                 data={
                     'to': to,
                     'content': content,
@@ -192,39 +284,8 @@ class Wapp:
             print(f'({datetime.now()}) Sent({log}) To({to})')
 
             # Return Sent
-            return True, sent
-
+            return (True, sent)
         except Exception as error:
-            return False, error
-
-    ##########################################################################################################################
-
-    # Get Host Device
-    def get_host_device(self, target: 'ITarget' = None):
-        if not isinstance(target, dict): target = self.target
-        return self.req(
-            target=target,
-            action='get_host_device',
-            data=None
-        )
-    
-    ##########################################################################################################################
-
-    # Get Message
-    def get_message(
-        self,
-        chat_id: str,
-        id: str,
-        target: 'ITarget' = None
-    ):
-        if not isinstance(target, dict): target = self.target
-        return self.req(
-            target=target,
-            action='get_message',
-            data={
-                'chatId': chat_id,
-                'id': id
-            }
-        )
+            return (False, error)
 
 ##########################################################################################################################
