@@ -3,7 +3,7 @@
 
 # Imports
 from flask import Request
-from typing import Callable, Any
+from typing import Callable, Any, TypedDict
 
 ##########################################################################################################################
 
@@ -12,6 +12,14 @@ TExec = Callable[['IMessage'], Any]
 
 # Execute Action Type
 TAExec = Callable[[Request], Any]
+
+##########################################################################################################################
+
+# Target Type
+class ITarget(TypedDict):
+    address: str
+    user: str
+    password: str
 
 ##########################################################################################################################
 

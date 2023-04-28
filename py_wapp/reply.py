@@ -5,7 +5,7 @@
 from flask import Request
 
 # Modules
-from .common import TWapp, TExec
+from .types import TWapp, TExec
 from .message import Message
 
 ##########################################################################################################################

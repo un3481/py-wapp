@@ -7,7 +7,7 @@ from flask import Flask, request, Request, Response
 from flask_httpauth import HTTPBasicAuth
 
 # Modules
-from .common import TWapp, TAExec
+from .types import TWapp, TAExec
 
 ##########################################################################################################################
 
@@ -15,7 +15,7 @@ from .common import TWapp, TAExec
 class Server:
 
     wapp: 'TWapp'
-    auth: HTTPBasicAuth
+    auth: 'HTTPBasicAuth'
     users: dict[str, str]
     
     @property

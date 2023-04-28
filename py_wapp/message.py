@@ -5,7 +5,7 @@
 from typing import TypedDict
 
 # Modules
-from .common import TWapp, TExec
+from .types import TWapp, TExec
 
 ##########################################################################################################################
 
